@@ -46,6 +46,11 @@ class DataProcessor:
         dt_object = datetime.strptime(dt_string, "%Y-%m-%dT%H:%M:%SZ")
         formatted_dt = dt_object.strftime("%B %d, %Y at %I:%M %p UTC")
         return formatted_dt
+      
+    def sort_reviews_by_date(self, reviews: List[Review], reverse=False):
+        def parse_date(date_string):
+            return datetime.strptime(date_string, "%B %d, %Y at %I:%M %p UTC")
+        return sorted(reviews, key=lambda review: parse_date(review.date), reverse=reverse)
         
     async def get_reviews(self, data_id: str, sort_by: str = "qualityScore") -> AnalysisResult:
         """
@@ -108,12 +113,12 @@ class DataProcessor:
             ) for review in _reviews]
 
             return AnalysisResult(
-                reviews=reviews,
                 type=place_info.get("type", ""),
                 title=place_info.get("title", ""),
                 rating=place_info.get("rating", 0.0),
                 address=place_info.get("address", ""),
                 status=search_metadata.get("status", ""),
+                reviews=self.sort_reviews_by_date(reviews),
                 total_reviews=place_info.get("reviews", 0),
                 data_id=search_parameters.get("data_id", ""),
                 created_at=search_metadata.get("created_at", ""),

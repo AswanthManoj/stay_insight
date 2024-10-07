@@ -1,81 +1,43 @@
-from pydantic import BaseModel
-import httpx
-import asyncio, os
 from typing import List
+from datetime import datetime
+from review_ai.utils import Review
 
-# class Step(BaseModel):
-#     explanation: str
-#     output: str
+def sort_reviews_by_date(reviews: List[Review]):
+    def parse_date(date_string):
+        return datetime.strptime(date_string, "%B %d, %Y at %I:%M %p UTC")
+    
+    return sorted(reviews, key=lambda review: parse_date(review.date), reverse=True)
 
-# class MathReasoning(BaseModel):
-#     steps: List[Step]
-#     final_answer: str
+sample_reviews = [
+    Review(
+        user="Alice",
+        date="August 03, 2024 at 03:53 PM UTC",
+        rating=4.5,
+        review_text="Great product!"
+    ),
+    Review(
+        user="Bob",
+        date="January 13, 2024 at 06:29 AM UTC",
+        rating=3.0,
+        review_text="It's okay, but could be better."
+    ),
+    Review(
+        user="Charlie",
+        date="August 12, 2024 at 01:50 PM UTC",
+        rating=5.0,
+        review_text="Absolutely love it!"
+    ),
+    Review(
+        user="Diana",
+        date="March 25, 2024 at 11:15 AM UTC",
+        rating=4.0,
+        review_text="Very satisfying purchase."
+    )
+]
 
-# class AsyncOpenAI:
-#     def __init__(self, api_key: str):
-#         self.api_key = api_key
-#         self.base_url = "https://api.openai.com/v1"
+# Use the sorting function
+sorted_reviews = sort_reviews_by_date(sample_reviews)
 
-#     async def chat_completion_parse(self, model: str, messages: List[dict], response_format: BaseModel):
-#         async with httpx.AsyncClient() as client:
-#             response = await client.post(
-#                 f"{self.base_url}/chat/completions",
-#                 headers={
-#                     "Authorization": f"Bearer {self.api_key}",
-#                     "Content-Type": "application/json"
-#                 },
-#                 json={
-#                     "model": model,
-#                     "messages": messages,
-#                     "response_format": {
-#                         "type": "json_schema",
-#                         "json_schema": response_format.model_json_schema()
-#                     }
-#                 }
-#             )
-#             response.raise_for_status()
-#             data = response.json()
-#             return response_format.model_validate(data['choices'][0]['message']['function_call']['arguments'])
-
-# async def main():
-#     client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-#     completion = await client.chat_completion_parse(
-#         model="gpt-4o-mini",
-#         messages=[
-#             {"role": "system", "content": "You are a helpful math tutor. Guide the user through the solution step by step."},
-#             {"role": "user", "content": "how can I solve 8x + 7 = -23"}
-#         ],
-#         response_format=MathReasoning
-#     )
-
-#     print(completion)
-
-# if __name__ == "__main__":
-#     asyncio.run(main())
-
-from pydantic import BaseModel
-from openai import OpenAI
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-class Step(BaseModel):
-    explanation: str
-    output: str
-
-class MathReasoning(BaseModel):
-    steps: list[Step]
-    final_answer: str
-
-completion = client.beta.chat.completions.parse(
-    model="gpt-4o-2024-08-06",
-    messages=[
-        {"role": "system", "content": "You are a helpful math tutor. Guide the user through the solution step by step."},
-        {"role": "user", "content": "how can I solve 8x + 7 = -23"}
-    ],
-    response_format=MathReasoning,
-)
-
-math_reasoning = completion.choices[0].message.parsed
-
-print(math_reasoning)
+# Print the sorted reviews
+for review in sorted_reviews:
+    print(f"{review.user}: {review.date}")

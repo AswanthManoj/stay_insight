@@ -71,6 +71,7 @@ async def analyze_restaurant(request: Request, background_tasks: BackgroundTasks
             if review_result.reviews == []:
                 raise HTTPException(status_code=404, detail="Data not found")
             review_result = await analyzer.generate_analysis(review_result)
+            review_result.reviews = data_processor.sort_reviews_by_date(review_result.reviews, reverse=True)
             return JSONResponse(content=review_result.model_dump())
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

@@ -16,6 +16,37 @@ Here are the Hotel Information:
 - Todays Date: {todays_date}
 """
 
+
+
+
+INTEGRATION_PROMPT = """You are updating an existing hotel analysis with new customer reviews. Combine the previous analysis with insights from the new reviews to create an updated, comprehensive report.
+
+Previous Analysis:
+{previous_analysis}
+
+New Customer Reviews:
+{new_reviews}
+
+Instructions:
+    1. Review the previous analysis and the new customer reviews.
+    2. Update the HotelAnalysis structure with insights from both sources.
+    3. Give slightly more weight to recent reviews when analyzing current hotel performance and trends.
+    4. Consider these points when integrating new reviews:
+        - Any changes in overall sentiment or specific aspects of the hotel experience
+        - New recurring themes or issues
+        - Improvements in previously identified problems
+        - Any notable shifts in guest experiences
+    5. Recalculate sentiment scores and percentages, incorporating both old and new reviews.
+    6. Update all sections of the analysis with new insights.
+    7. Revise the top 5 improvement priorities based on the integrated analysis.
+    8. In the summary, note any significant changes observed when comparing new reviews to the previous analysis.
+
+Provide an objective, actionable analysis for hotel management. Output should be a valid JSON object conforming to the HotelAnalysis model structure, reflecting an up-to-date analysis of the hotel's performance and guest satisfaction.
+"""
+
+
+
+
 DATA_PROMPT = """Here are the Customer Reviews:
 {reviews}
 """
