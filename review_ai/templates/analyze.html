@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DineInsight: Restaurant Review Analytics</title>
+    <title>StayInsight: Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glassmorphic {
@@ -108,13 +108,16 @@
 <body class="h-full bg-stone-900 dark:bg-stone-900 text-stone-300 dark:text-stone-300">
     <div class="flex flex-col min-h-screen">
         <header class="p-4 px-6 flex justify-between items-center">
-            <h3 class="text-bold text-xl text-stone-400">DineInsight AI</h3>
+            <a href="/" class="bg-[#7fd36e] hover:bg-[#63aa55] text-stone-800 hover:text-stone-100 text-stone-800 font-bold py-2 px-4 rounded">
+                Go to Home
+            </a>
+            <h3 class="text-bold text-xl text-stone-400">StayInsight AI</h3>
         </header>
 
         <main class="flex-grow flex flex-col items-center justify-start px-4 py-8 relative overflow-x-hidden">
             <div id="searchSection" class="w-full max-w-4xl bg-stone-800 dark:bg-stone-800 rounded-xl p-4 sm:p-6 md:p-8 shadow-xl text-center sticky top-0 z-10">
-                <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-stone-300 mb-4 sm:mb-6">DineInsight</h1>
-                <p class="text-lg sm:text-xl md:text-2xl text-[#7fd36e] mb-6 sm:mb-8">Turning reviews into revenue: Your menu for success</p>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-stone-300 mb-4 sm:mb-6">StayInsight Analysis</h1>
+                <p class="text-lg sm:text-xl md:text-2xl text-[#7fd36e] mb-6 sm:mb-8">Get insights from customer reviews</p>
                 <div class="rounded-lg p-4 sm:p-6 mt-6 sm:mt-10 mb-6 sm:mb-10 mx-auto max-w-3xl">
                     <div class="relative mb-4">
                         <div class="flex flex-col sm:flex-row items-center bg-stone-700 rounded-lg">
@@ -126,27 +129,44 @@
                             >
                             <button 
                                 id="generateButton"
-                                class="w-full sm:w-auto bg-[#7fd36e] hover:bg-[#6ac259] text-stone-800 text-lg sm:text-xl font-bold py-3 sm:py-5 px-4 sm:px-6 rounded-b-lg sm:rounded-r-lg sm:rounded-bl-none transition duration-300 mt-2 sm:mt-0"
+                                class="w-full sm:w-auto bg-[#7fd36e] hover:bg-[#63aa55] text-stone-800 hover:text-stone-100 text-lg sm:text-xl font-bold py-3 sm:py-5 px-4 sm:px-6 rounded-b-lg sm:rounded-r-lg sm:rounded-bl-none transition duration-300 mt-2 sm:mt-0"
                                 disabled
                             >
                                 Generate
                             </button>
                         </div>
-
-                        <!-- Suggestions will be dynamically added inside -->
                         <ul id="suggestionsList" class="absolute z-10 w-full mt-2 rounded-md shadow-lg glassmorphic"></ul>
+                    </div>
+                    <div class="flex justify-center space-x-4 mt-4">
+                        <button id="instantAnalysisBtn" class="bg-[#7fd36e] hover:bg-[#6ac259] text-stone-800 font-bold py-2 px-4 rounded">
+                            Get Instant Analysis
+                        </button>
+                        <button id="fullAnalysisBtn" class="bg-stone-600 hover:bg-stone-500 text-white font-bold py-2 px-4 rounded">
+                            Get Full Analysis
+                        </button>
                     </div>
                 </div>
             </div>
 
+            <div id="tokenSection" class="mt-8 text-center hidden bg-stone-800 p-6 rounded-lg max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold text-[#7fd36e] mb-4">Full Analysis In Progress</h2>
+                <p id="tokenMessage" class="text-lg mb-4"></p>
+                <div id="analysisToken" class="text-3xl font-bold text-white bg-stone-700 p-4 rounded-lg mb-4"></div>
+                <p class="text-sm text-stone-400 mb-4">Full analysis may take some time. You can close this page and use the token later to retrieve your results.</p>
+                <a href="/retrieve" class="bg-[#7fd36e] hover:bg-[#6ac259] text-stone-800 font-bold py-2 px-4 rounded">
+                    Go to Analysis Retrieval Page
+                </a>
+            </div>
+
             <div id="analysisContent" class="mt-8 w-full px-4 sm:px-6 md:px-8"></div>
+        
         </main>
 
         <footer class="text-center p-4 text-white/60 text-sm">
-            <p>&copy; 2024 DineInsight. All rights reserved.</p>
+            <p>&copy; 2024 StayInsight. All rights reserved.</p>
         </footer>
     </div>
 
-    <script src="/static/home.js"></script>
+    <script src="/static/analyze.js"></script>
 </body>
 </html>
