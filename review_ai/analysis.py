@@ -1,13 +1,14 @@
-import os, time
+import yaml
 from openai import OpenAI
 from pprint import pprint
-import asyncio, json, httpx
+import asyncio, uuid, httpx
 from datetime import datetime
-from pydantic import BaseModel
+from fastapi import BackgroundTasks
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
-from review_ai.prompt import SYSTEM_PROMPT, DATA_PROMPT
 from review_ai.utils import (AnalysisResult, APIError, NoResultsError, 
 SuggestionResult, Review, Suggestion, DataProcessorError, HotelAnalysis)
+from review_ai.prompt import SYSTEM_PROMPT, DATA_PROMPT, BATCH_ANALYTICS_PROMPT
 
 
 
@@ -15,15 +16,15 @@ class DataProcessor:
     
     def __init__(self, api_key: str, num_reviews: int=50, num_suggestion: int=5, language: str="en", country: str="in", delay: float=1) -> None:
         """
-        Initializes the DataProcessor with the given parameters.
+        Initialize DataProcessor with the given parameters.
 
-        Parameters:
-        api_key (str): The SerpApi API key to use for requests.
-        num_reviews (int): The number of reviews to fetch. Defaults to 50.
-        num_suggestion (int): The number of suggestions to fetch. Defaults to 5.
-        language (str): The language to use for the search. Defaults to "en".
-        country (str): The country to use for the search. Defaults to "in".
-        delay (float): The delay in seconds between requests. Defaults to 1 second.
+        Args:
+        - api_key (str): SerpAPI API key.
+        - num_reviews (int): Number of reviews to retrieve. Defaults to 50.
+        - num_suggestion (int): Number of suggestions to retrieve. Defaults to 5.
+        - language (str): Language of the reviews and suggestions to retrieve. Defaults to "en".
+        - country (str): Country of the reviews and suggestions to retrieve. Defaults to "in".
+        - delay (float): Delay in seconds between API requests. Defaults to 1.
         """
         self.delay = delay
         self.api_key = api_key
@@ -35,33 +36,45 @@ class DataProcessor:
         
     def convert_datetime(self, dt_string: str) -> str:
         """
-        Converts a datetime string in the format %Y-%m-%dT%H:%M:%SZ to a human-readable format.
+        Converts a datetime string from the format "%Y-%m-%dT%H:%M:%SZ"
+        to "%B %d, %Y at %I:%M %p UTC".
 
-        Parameters:
-        dt_string (str): The datetime string to convert.
+        Args:
+        - dt_string (str): The datetime string to be converted.
 
         Returns:
-        str: The formatted datetime string.
+        - str: The converted datetime string.
         """
         dt_object = datetime.strptime(dt_string, "%Y-%m-%dT%H:%M:%SZ")
         formatted_dt = dt_object.strftime("%B %d, %Y at %I:%M %p UTC")
         return formatted_dt
       
     def sort_reviews_by_date(self, reviews: List[Review], reverse=False):
+        """
+        Sorts a list of reviews by date.
+
+        Args:
+        - reviews (List[Review]): The list of reviews to be sorted.
+        - reverse (bool): Whether to sort in descending order. Defaults to False.
+
+        Returns:
+        - List[Review]: The sorted list of reviews.
+        """
         def parse_date(date_string):
             return datetime.strptime(date_string, "%B %d, %Y at %I:%M %p UTC")
         return sorted(reviews, key=lambda review: parse_date(review.date), reverse=reverse)
         
-    async def get_reviews(self, data_id: str, sort_by: str = "qualityScore") -> AnalysisResult:
+    async def get_reviews(self, data_id: str, sort_by: str = "qualityScore", use_full_reviews: bool = False) -> AnalysisResult:
         """
-        Fetches reviews for a given data_id and returns an AnalysisResult with the extracted information.
+        Retrieves Google Maps reviews for a given data_id.
 
-        Parameters:
-        data_id (str): The data_id to fetch reviews for.
-        sort_by (str): The field to sort the reviews by. Defaults to "qualityScore".
+        Args:
+        - data_id (str): The data_id of the location to retrieve reviews for.
+        - sort_by (str, optional): The field to sort the reviews by. Defaults to "qualityScore".
+        - use_full_reviews (bool, optional): Whether to retrieve all reviews or just the top self.num_reviews. Defaults to False.
 
         Returns:
-        AnalysisResult: An AnalysisResult with the extracted information.
+        - AnalysisResult: An AnalysisResult object containing the retrieved reviews, sorted by date in descending order.
         """
         _reviews = []
         params = {
@@ -78,7 +91,7 @@ class DataProcessor:
 
         try:
             async with httpx.AsyncClient() as client:
-                while len(_reviews) < self.num_reviews:
+                while True:
                     response = await client.get(self.base_url, params=params)
                     data = response.json()
 
@@ -92,18 +105,22 @@ class DataProcessor:
                     new_reviews = data.get("reviews", [])
                     _reviews.extend(new_reviews)
 
+                    if use_full_reviews:
+                        total_reviews = place_info.get("reviews", 0)
+                        if len(_reviews) >= total_reviews:
+                            break
+                    elif len(_reviews) >= self.num_reviews:
+                        break
+
                     if "serpapi_pagination" not in data or "next" not in data["serpapi_pagination"]:
                         # No more pages
                         break
 
                     params["next_page_token"] = data["serpapi_pagination"]["next_page_token"]
-                    
-                    if len(_reviews) >= self.num_reviews:
-                        break
-
                     await asyncio.sleep(self.delay)
-                    
-            _reviews = _reviews[:self.num_reviews]
+
+            if not use_full_reviews:
+                _reviews = _reviews[:self.num_reviews]
 
             reviews = [Review(
                 rating=review.get("rating", 0),
@@ -122,8 +139,7 @@ class DataProcessor:
                 total_reviews=place_info.get("reviews", 0),
                 data_id=search_parameters.get("data_id", ""),
                 created_at=search_metadata.get("created_at", ""),
-            )   
-                
+            )  
 
         except APIError as e:
             # If we have partial results, return them
@@ -139,15 +155,14 @@ class DataProcessor:
 
     def _create_partial_result(self, reviews: List[Dict], data_id: str) -> AnalysisResult:
         """
-        Creates an AnalysisResult from a list of reviews, to be used in the event of an API error.
-        The result will be marked as "Partial" and will not contain any location-specific information.
+        Creates an AnalysisResult object with the given reviews, marked as a partial result.
 
         Args:
-            reviews (List[Dict]): A list of review dictionaries, with keys "iso_date", "rating", "user", and "extracted_snippet".
-            data_id (str): The data ID of the location.
+        - reviews (List[Dict]): The list of reviews to include in the result.
+        - data_id (str): The data_id of the location to associate the partial result with.
 
         Returns:
-            AnalysisResult: An AnalysisResult object containing the reviews.
+        - AnalysisResult: An AnalysisResult object with the given reviews, type, title, rating, address, status, total_reviews, data_id, and created_at fields populated.
         """
         formatted_reviews = [Review(
             date=review.get("iso_date", ""),
@@ -170,16 +185,21 @@ class DataProcessor:
             
     async def get_suggestions(self, query: str, longitude: float, latitude: float, filter: Optional[str]=None) -> SuggestionResult:
         """
-        Fetches suggestions for a given query and location, and returns a SuggestionResult with the extracted information.
-
-        Parameters:
-        query (str): The query to search for.
-        longitude (float): The longitude of the location.
-        latitude (float): The latitude of the location.
-        filter (Optional[str]): The type of suggestion to filter the results by. Defaults to None, which returns all types of suggestions.
-
+        Retrieves Google Maps Autocomplete suggestions for the given query, filtered by the given longitude and latitude.
+        
+        Args:
+        - query (str): The query to search for.
+        - longitude (float): The longitude of the location to filter suggestions by.
+        - latitude (float): The latitude of the location to filter suggestions by.
+        - filter (str): An optional filter to limit the suggestions to a specific type (e.g. "establishment", "geocode", etc.).
+        
         Returns:
-        SuggestionResult: A SuggestionResult with the extracted information.
+        - SuggestionResult: An object containing the status of the request, a list of up to self.num_suggestion Suggestion objects, and the created_at timestamp of the request.
+        
+        Raises:
+        - APIError: If the request to the API fails.
+        - NoResultsError: If no suggestions are found for the given query.
+        - DataProcessorError: If an unexpected error occurs while fetching suggestions.
         """
         try:
             location = f"@{latitude},{longitude},3z"
@@ -228,94 +248,337 @@ class DataProcessor:
 
 
 class ReviewAnalyzer:
-    def __init__(self, model: str, api_key: str|List[str], system_prompt: str, data_prompt: str) -> None:
+    def __init__(self, model: str, api_key: str|List[str], system_prompt: str, data_prompt: str, batch_analytics_prompt: str) -> None:
+        """
+        Initialize the ReviewAnalyzer class.
+
+        Args:
+        - model (str): The OpenAI model to use for generating text.
+        - api_key (str|List[str]): The OpenAI API key. If a list of keys is provided, the class will use the first key and cycle through the list if the key is rate-limited.
+        - system_prompt (str): The prompt to provide to the model as context when generating text.
+        - data_prompt (str): The prompt to provide to the model when generating text about a single data point.
+        - batch_analytics_prompt (str): The prompt to provide to the model when generating text about a batch of data points.
+        """
         self.model = model
         self.data_prompt = data_prompt
         self.system_prompt = system_prompt
         self.client = OpenAI(api_key=api_key)
+        self.batch_analytics_prompt = batch_analytics_prompt
 
     def reviews_to_string(self, reviews: List[Review]) -> str:
+        """
+        Converts a list of Review objects into a string.
+
+        Args:
+        - reviews (List[Review]): The list of Review objects to convert.
+
+        Returns:
+        - str: A string containing the information from the Review objects, formatted as a list item for each review.
+        """
         return "\n".join([f"- {review.user} gave a rating of '{review.rating}/5' on '{review.date}' with comment {review.review_text}" for review in reviews])
+
+    def _generate_(self, messages: List[dict]):
+        """
+        Uses the OpenAI LLM to generate text based on the provided messages.
+
+        Args:
+        - messages (List[dict]): The messages to provide to the LLM, where each message is a dictionary containing the following keys:
+            - role (str): The role of the message, either "system" or "user".
+            - content (str): The content of the message.
+
+        Returns:
+        - AnalysisResult: The generated text, parsed as an AnalysisResult object.
+        """
+        print("LLM Call")
+        return self.client.beta.chat.completions.parse(
+            messages=messages,
+            max_completion_tokens=3000,
+            response_format=HotelAnalysis,
+            model=self.model or "gpt-4o-mini",
+        )
 
     async def generate_analysis(self, review_analysis: AnalysisResult) -> AnalysisResult:
         """
-        Generates a hotel analysis based on the given review_analysis.
+        Uses the OpenAI LLM to generate an analysis of the provided reviews.
 
-        Parameters:
-        review_analysis (AnalysisResult): The AnalysisResult object to generate the hotel analysis for.
+        Args:
+        - review_analysis (AnalysisResult): The analysis to generate text for, including the reviews to consider.
 
         Returns:
-        AnalysisResult: The modified AnalysisResult object with the hotel_analysis field populated.
+        - AnalysisResult: The generated analysis, with the hotel_analysis field populated with the generated text.
         """
-        completion = self.client.beta.chat.completions.parse(
-            model=self.model or "gpt-4o-mini",
-            max_completion_tokens=4000,
-            messages=[
-                {"role": "system", "content": self.system_prompt.format(
-                    name=review_analysis.title, 
-                    rating=review_analysis.rating, 
-                    address=review_analysis.address,
-                    todays_date=datetime.now().strftime("%Y-%m-%d"),
-                    total_reviews=review_analysis.total_reviews,
-                )},
-                {"role": "user", "content": self.data_prompt.format(
-                    reviews=self.reviews_to_string(review_analysis.reviews)
-                )}
-            ],
-            response_format=HotelAnalysis,
-        )
+        messages = [
+            {"role": "system", "content": self.system_prompt.format(
+                name=review_analysis.title, 
+                rating=review_analysis.rating, 
+                address=review_analysis.address,
+                todays_date=datetime.now().strftime("%Y-%m-%d"),
+                total_reviews=review_analysis.total_reviews,
+            )},
+            {"role": "user", "content": self.data_prompt.format(
+                reviews=self.reviews_to_string(review_analysis.reviews)
+            )}
+        ]
+        loop = asyncio.get_event_loop()
+        completion = await loop.run_in_executor(None, self._generate_, messages)
         review_analysis.hotel_analysis = completion.choices[0].message.parsed
         return review_analysis
+    
+    async def combine_analysis(self, analysis_results: List[AnalysisResult]) -> AnalysisResult:
+        """
+        Uses the OpenAI LLM to combine the analysis of multiple batches of reviews.
+
+        Args:
+        - analysis_results (List[AnalysisResult]): The analysis results to combine, each containing the reviews to consider and the generated analysis.
+
+        Returns:
+        - AnalysisResult: The combined analysis, with the hotel_analysis field populated with the generated text.
+        """
+        if len(analysis_results) == 1:
+            return analysis_results[0]
+        
+        messages = [
+            {"role": "system", "content": self.batch_analytics_prompt.format(
+                name=analysis_results[0].title, 
+                rating=analysis_results[0].rating, 
+                address=analysis_results[0].address,
+                todays_date=datetime.now().strftime("%Y-%m-%d"),
+                total_reviews=analysis_results[0].total_reviews,
+            )},
+            {"role": "user", "content": "\n---\n\n".join([
+                f"[{analysis_results[i].reviews[0].date} to {analysis_results[i].reviews[-1].date}]\n{yaml.dump(result.hotel_analysis.model_dump())}" 
+                for i, result in enumerate(analysis_results)])
+            }
+        ]
+        loop = asyncio.get_event_loop()
+        completion = await loop.run_in_executor(None, self._generate_, messages)
+        analysis = AnalysisResult(**analysis_results[0].model_dump())
+        analysis.hotel_analysis = completion.choices[0].message.parsed
+        return analysis
+    
+    
+
+class TaskManager:
+    def __init__(self, data_processor: DataProcessor, review_analyzer: ReviewAnalyzer, batch_size: int=30) -> None:
+        """
+        Initialize the TaskManager class.
+
+        Args:
+        - data_processor (DataProcessor): The DataProcessor to use for fetching reviews and generating suggestions.
+        - review_analyzer (ReviewAnalyzer): The ReviewAnalyzer to use for generating text summaries of reviews.
+        - batch_size (int): The number of reviews to process at once. Defaults to 30.
+        """
+        self.cleanup_task = None
+        self.analysis_results = {}
+        self.batch_size = batch_size
+        self.data_processor = data_processor
+        self.review_analyzer = review_analyzer
+        
+    async def start_cleanup_task(self):
+        """
+        Start a background task to clean up old analysis results.
+
+        This task periodically checks for any analysis results that are over 24 hours old
+        and removes them from the cache. If the task is already running, this function does nothing.
+        """
+        if self.cleanup_task is None:
+            self.cleanup_task = asyncio.create_task(self.cleanup_old_results())
+
+    async def cleanup_old_results(self):
+        """
+        Periodically clean up old analysis results from the cache.
+
+        This task checks every hour for any analysis results that are over 24 hours old and removes them from the cache.
+        """
+        while True:
+            await asyncio.sleep(3600)  # Check every hour
+            current_time = datetime.now()
+            to_remove = []
+            for token, result in self.analysis_results.items():
+                if 'created_at' in result and current_time - result['created_at'] > timedelta(hours=24):
+                    to_remove.append(token)
+            for token in to_remove:
+                del self.analysis_results[token]
+        
+    async def autocomplete(self, query: str, longitude: float, latitude: float, filter: Optional[str]=None) -> SuggestionResult:
+        """
+        Autocomplete a search query with location-based suggestions.
+
+        Args:
+        - query (str): The search query to autocomplete.
+        - longitude (float): The longitude of the location to filter suggestions by.
+        - latitude (float): The latitude of the location to filter suggestions by.
+        - filter (str): An optional filter to limit the suggestions to a specific type (e.g. "establishment", "geocode", etc.).
+
+        Returns:
+        - SuggestionResult: A JSON response containing the autocomplete suggestions.
+        """
+        return await self.data_processor.get_suggestions(query, longitude, latitude, filter)
+
+    async def get_instant_analysis(self, data_id: str) -> AnalysisResult:
+        """
+        Get the instant analysis for the given data ID.
+
+        Args:
+        - data_id (str): The data ID of the location to get the analysis for.
+
+        Returns:
+        - AnalysisResult: A JSON response containing the analysis result.
+
+        Raises:
+        - ValueError: If no reviews are found for the given data ID.
+        """
+        review_result = await self.data_processor.get_reviews(data_id=data_id) 
+        if review_result.reviews == []:
+            raise ValueError(f"No reviews found for data ID: {data_id}")
+        review_result = await self.review_analyzer.generate_analysis(review_result)
+        review_result.reviews = self.data_processor.sort_reviews_by_date(review_result.reviews, reverse=True)
+        return review_result
+    
+    async def get_full_analysis(self, data_id: str, background_tasks: BackgroundTasks) -> dict:
+        """
+        Run a full analysis of the hotel in the background.
+
+        Args:
+        - data_id (str): The data ID of the hotel to get the analysis for.
+        - background_tasks (BackgroundTasks): The background task manager for running the full analysis.
+
+        Returns:
+        - dict: A JSON response containing the analysis token.
+
+        The full analysis is run asynchronously in the background, and the token can be used to retrieve the result.
+        """
+        token = str(uuid.uuid4())
+        background_tasks.add_task(self._process_full_analysis_, data_id, token)
+        self.analysis_results[token] = {"status": "in_progress", "created_at": datetime.now()}
+        return {"token": token}
+    
+    async def _process_full_analysis_(self, data_id: str, token: str) -> None:
+        """
+        Process the full analysis of the hotel in the background.
+
+        Args:
+        - data_id (str): The data ID of the hotel to get the analysis for.
+        - token (str): The analysis token to store the result.
+
+        Returns:
+        - None
+
+        The function is run asynchronously in the background, and the result is stored in `self.analysis_results` with the given token.
+        The result can be retrieved using the `get_analysis_result` method.
+        """
+        try:
+            # Get full hotel reviews
+            review_result = await self.data_processor.get_reviews(data_id=data_id, use_full_reviews=True)
+            
+            if not review_result.reviews:
+                raise ValueError(f"No reviews found for data ID: {data_id}")
+            
+            batches = [review_result.reviews[i:i + self.batch_size] for i in range(0, len(review_result.reviews), self.batch_size)]
+            
+            async def process_batch(batch):
+                batch_result = AnalysisResult(**review_result.model_dump())
+                batch_result.reviews = batch
+                return await self.review_analyzer.generate_analysis(batch_result)
+            
+            async def combine_level(results: List[AnalysisResult], batch_size: int=10) -> List[AnalysisResult]:
+                if len(results) <= 1:
+                    return results
+                
+                batches = [results[i:i+batch_size] for i in range(0, len(results), batch_size)]
+                combined_results = await asyncio.gather(*[self.review_analyzer.combine_analysis(batch) for batch in batches])
+
+                if len(combined_results) > 1:
+                    return await combine_level(combined_results)
+                else:
+                    return combined_results
+                
+            # Process batches asynchronously
+            batch_results = await asyncio.gather(*[process_batch(batch) for batch in batches])
+            
+            # Combining analysis results
+            final_results = await combine_level(batch_results, batch_size=self.batch_size//2)
+            final_results[0].reviews = self.data_processor.sort_reviews_by_date(review_result.reviews, reverse=True)
+            
+            self.analysis_results[token] = {
+                "status": "completed", 
+                "created_at": datetime.now(),
+                "data": final_results[0].model_dump(),
+            }
+        except Exception as e:
+            self.analysis_results[token] = {
+                "error": str(e),
+                "status": "failed", 
+                "created_at": datetime.now()
+            }
+            
+    async def get_analysis_result(self, token: str) -> dict:
+        """
+        Get the analysis result for the given token.
+
+        Args:
+        - token (str): The token of the analysis result to be retrieved.
+
+        Returns:
+        - dict: A JSON response containing the analysis result, or a status message if the analysis is still in progress.
+
+        Raises:
+        - ValueError: If the token is invalid or expired.
+        """
+        if token not in self.analysis_results:
+            raise ValueError(f"Invalid or expired token: {token}")
+
+        result = self.analysis_results[token]
+        
+        if result["status"] == "completed":
+            return result["data"]
+        elif result["status"] == "in_progress":
+            return {"status": "in_progress"}
+        else:
+            raise ValueError(f"Analysis failed with error: {result['error']}")
+    
 
 
-
-DATA_PROCESSOR = None
-def get_data_processor(api_key: str, num_reviews: int=50, num_suggestion: int=5, language: str="en", country: str="in", delay: float=1) -> DataProcessor:
+TASK_MANAGER = None
+def get_task_manager(serpapi_key: str, model: str, openai_key: str, num_reviews: int=50, num_suggestion: int=5, batch_size: int=30, language: str="en", country: str="in", delay: float=1) -> TaskManager:
     """
-    Returns an instance of DataProcessor with the given parameters.
+    Get the TaskManager instance.
 
-    Parameters:
-    api_key (str): The SerpApi API key to use for requests.
-    num_reviews (int): The number of reviews to fetch. Defaults to 50.
-    num_suggestion (int): The number of suggestions to fetch. Defaults to 5.
-    language (str): The language to use for the search. Defaults to "en".
-    country (str): The country to use for the search. Defaults to "in".
-    delay (float): The delay in seconds between requests. Defaults to 1 second.
+    The TaskManager is a singleton class that is responsible for managing the analysis tasks.
+    It uses a ReviewAnalyzer to analyze reviews and a DataProcessor to retrieve reviews and suggestions.
+
+    Args:
+    - serpapi_key (str): The SerpAPI API key.
+    - model (str): The name of the OpenAI model to use for analysis.
+    - openai_key (str): The OpenAI API key.
+    - num_reviews (int): The number of reviews to retrieve. Defaults to 50.
+    - num_suggestion (int): The number of suggestions to retrieve. Defaults to 5.
+    - batch_size (int): The batch size for analysis. Defaults to 30.
+    - language (str): The language of the reviews and suggestions to retrieve. Defaults to "en".
+    - country (str): The country of the reviews and suggestions to retrieve. Defaults to "in".
+    - delay (float): The delay in seconds between API requests. Defaults to 1.
 
     Returns:
-    DataProcessor: An instance of DataProcessor with the given parameters.
+    - TaskManager: The TaskManager instance.
     """
-    global DATA_PROCESSOR
-    if DATA_PROCESSOR is None:
-        DATA_PROCESSOR = DataProcessor(
-            delay=delay,
-            api_key=api_key, 
-            country=country, 
-            language=language,
-            num_reviews=num_reviews, 
-            num_suggestion=num_suggestion, 
+    global TASK_MANAGER
+    if TASK_MANAGER is None:
+        TASK_MANAGER = TaskManager(
+            batch_size=batch_size,
+            review_analyzer=ReviewAnalyzer(
+                model=model,
+                api_key=openai_key,
+                data_prompt=DATA_PROMPT,
+                system_prompt=SYSTEM_PROMPT,
+                batch_analytics_prompt=BATCH_ANALYTICS_PROMPT
+            ),
+            data_processor=DataProcessor(
+                delay=delay,
+                country=country, 
+                language=language,
+                api_key=serpapi_key,
+                num_reviews=num_reviews, 
+                num_suggestion=num_suggestion, 
+            )
         )
-    return DATA_PROCESSOR
-
-
-ANALYZER = None
-def get_analyzer(model: str, api_key: str) -> ReviewAnalyzer:
-    """
-    Returns an instance of ReviewAnalyzer with the given model and API key.
-
-    Parameters:
-    model (str): The model to use for analysis. Defaults to "gpt-4o-mini".
-    api_key (str): The OpenAI API key to use for requests.
-
-    Returns:
-    ReviewAnalyzer: An instance of ReviewAnalyzer with the given model and API key.
-    """
-    global ANALYZER
-    if ANALYZER is None:
-        ANALYZER = ReviewAnalyzer(
-            model=model,
-            api_key=api_key,
-            data_prompt=DATA_PROMPT,
-            system_prompt=SYSTEM_PROMPT
-        )
-    return ANALYZER
+    return TASK_MANAGER
