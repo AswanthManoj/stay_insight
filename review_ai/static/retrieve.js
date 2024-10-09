@@ -45,6 +45,7 @@ function renderReviews(reviews) {
     `).join('');
 }
 
+
 function displayAnalysis(analysis) {
     const starRating = '★'.repeat(Math.floor(analysis.rating)) + 
                        (analysis.rating % 1 >= 0.5 ? '½' : '') + 
@@ -52,11 +53,16 @@ function displayAnalysis(analysis) {
 
     let analysisHTML = `
         <div class="bg-stone-900 p-4">
-            <header class="mb-8">
-                <h1 class="text-4xl font-bold mb-2">${analysis.title}</h1>
-                <p class="text-xl text-stone-400">${analysis.address}</p>
-                <div class="text-2xl text-yellow-400 mt-2">${starRating} (${analysis.rating})</div>
-                <span class="text-stone-500 sm:text-md md:text-lg lg:text-xl mt-2">Total reviews: ${analysis.total_reviews}</span>
+            <header class="mb-8 flex justify-between items-start">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">${analysis.title}</h1>
+                    <p class="text-xl text-stone-400">${analysis.address}</p>
+                    <div class="text-2xl text-yellow-400 mt-2">${starRating} (${analysis.rating})</div>
+                    <span class="text-stone-500 sm:text-md md:text-lg lg:text-xl mt-2">Total reviews: ${analysis.total_reviews}</span>
+                </div>
+                <button id="downloadAnalysis" class="bg-[#7fd36e] hover:bg-[#6ac259] text-stone-800 font-bold py-2 px-4 rounded">
+                    Download Analysis
+                </button>
             </header>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -314,6 +320,16 @@ function displayAnalysis(analysis) {
     setTimeout(() => {
         analysisContent.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+
+    document.getElementById('downloadAnalysis').addEventListener('click', async (e) => {
+        const token = tokenInput.value.trim();
+        try {
+            window.location.href = `/api/download/${token}`;
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error downloading PDF');
+        }
+    });
 
     // Add event listener for "Load More" button
     const loadMoreBtn = document.getElementById('loadMoreBtn');

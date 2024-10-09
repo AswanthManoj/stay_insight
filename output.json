@@ -1,1 +1,327 @@
-{"type":"Restaurant","title":"KFC","status":"Success","rating":3.9,"data_id":"0x3b081bf5ede1a9cd:0x8171a8da03b34b38","address":"Mughal Mall NH 66, Vadakkenada, Kodungallur, Kerala 680664, India","reviews":[{"user":"Safwan Mohammed","date":"January 21, 2019 at 05:43 PM UTC","rating":5.0,"review_text":"Really  loved  it  ..\nBut  cant  afford  it  ..\nAt  urban  oasis  mall  hubli  ..\nSelf  service\n...\nThe  staffs  are  not much customer  friendly  as  to  my  personal  opinion  ..\n🙄\n..\nThe  infrastructures    the  ampience  and  environment  they  made  up is  good  ..\n..\nWashroom  is  too  small  ..\nCant  expect  from a franchise  shop  like  KFC  ..\n😝.."},{"user":"Arun Antony","date":"October 21, 2017 at 01:15 PM UTC","rating":4.0,"review_text":"Firstly thank you KFC to feed us in the Tier 2 cities. It’s always a great pleasure to visit  occasionally with family here.\n\nPlace is spacious and sits in the middle of the town on the ground floor of Mughal Mall. Not always crowded. The staff syncs with the people visiting here as they are purely localites.\n\nAnd tried the Secret Burger of KFC. Superb. Humongous. And juicy as usual . You will finish sweating . It’s that good and big.\n\nParking inside the mall, so the fees are !\n\nOverall a family gathering spot!!"},{"user":"Aakash","date":"July 07, 2018 at 12:30 PM UTC","rating":5.0,"review_text":"It's quite good\nFoods are really great. The service is also great. Behaviour towards customers is good. There not a lot a wait for the food. It's not much crowded in weekdays, but weekends are a little bit crowded.\nIt's a nice for a family to dine. I often order food takeaway. Overall really great."},{"user":"Sarath Sivadasan","date":"November 25, 2020 at 06:41 PM UTC","rating":4.0,"review_text":"This is located in Mughal mall kodungallur good customer experience parking facilities\nQuiet and clean place.."},{"user":"Abhina krish","date":"November 08, 2021 at 10:46 AM UTC","rating":1.0,"review_text":"Its A Good Place To Eat\nFood"},{"user":"Assif Ali","date":"December 27, 2021 at 10:42 AM UTC","rating":3.0,"review_text":"Good quality food.. but no air conditioning."},{"user":"Naveen Kumar","date":"December 29, 2020 at 05:18 AM UTC","rating":1.0,"review_text":"Worst kfc I had ever experienced,I would have gave negative star rating for the taste."},{"user":"Farzeen Pachu","date":"February 03, 2020 at 11:07 AM UTC","rating":4.0,"review_text":"Good food neat and clean place"},{"user":"J Joy","date":"August 16, 2017 at 06:53 AM UTC","rating":4.0,"review_text":"Staffs are polite and calm"},{"user":"Shihas Ashraf","date":"June 19, 2018 at 10:04 AM UTC","rating":1.0,"review_text":"Worst service of all kfc outlet i think..its an international brand and doesnt have a standard facility and service like local shops near by...Shop closes at 8:15pm..and doesnt serve even drinks to the customers dinning at the time..no ac or fan...if asked they say , mall is not open..only kfc is currently  working in that mall...better close down the shop or shift another location. ."}],"created_at":"2024-10-07 07:04:23 UTC","total_reviews":1438,"restaurant_analysis":{"restaurant_name":"KFC","summary":"KFC in Mughal Mall, Kodungallur offers a generally favorable dining experience with good food quality and a pleasant environment, though inconsistent service and ambiance issues detract from customer satisfaction.","overall_sentiment":{"average_score":3.5,"positive_percentage":55.6,"neutral_percentage":22.2,"negative_percentage":22.2},"food_quality":{"top_praised_dishes":["Secret Burger","Fried Chicken"],"most_criticized_dishes":["Drinks","Other menu items lacking flavor"],"common_praises":["Good quality food","Great flavors in dishes","Generous portion sizes"],"common_criticisms":["Inconsistent taste","Items lacking expected flavor","Limited drink availability"],"suggestions":["Ensure consistency in food preparation to maintain flavor standards.","Enhance beverage offerings and ensure availability.","Consider adding new items to the menu to refresh customer interest."]},"service":{"strengths":["Friendly staff during less crowded hours","Efficient food delivery on weekdays"],"weaknesses":["Inconsistent service quality","Lack of attentiveness during peak hours","Inadequate facilities such as lack of AC"],"suggestions":["Implement regular training sessions for staff to enhance customer interaction skills.","Add staff during peak times to improve service efficiency.","Ensure all facility features like air conditioning are functioning and validated."]},"ambiance":{"positive_aspects":["Spacious seating area","Quiet environment conducive to family dining","Neat and clean premises"],"negative_aspects":["Poor restroom facilities","Inadequate climate control","Ambiance not consistent with expectations of an international brand"],"cleanliness_issues":["Washroom cleanliness is occasionally mentioned as poor"],"suggestions":["Upgrade restroom facilities and ensure regular cleaning schedules are adhered to.","Improve climate control measures for comfort.","Enhance overall decor to align with brand standards."]},"value_for_money":{"perceived_value":"Customers generally feel they receive good value for the food quality, though some perceive certain menu items as overpriced without compensation in quality.","overpriced_items":["Drinks","Some specialty items"],"good_value_items":["Secret Burger","Family meal deals which provide generous portions"],"suggestions":["Review menu pricing strategy to ensure items reflect their quality and size.","Promote family deals and value items more prominently in marketing efforts."]},"special_features":{"unique_selling_points":["Signature KFC recipes that appeal to local tastes"],"event_feedback":[],"suggestions":[]},"online_presence":{"website_feedback":[],"social_media_feedback":[],"suggestions":["Increase engagement on social media by sharing customer stories and special promotions.","Enhance the website for easier navigation and accurate menu representation."]},"top_improvement_priorities":[{"category":"Food Quality","issue":"Inconsistent taste across menu items.","suggestion":"Implement stricter quality control measures during food preparation.","potential_impact":"Improving food consistency will enhance customer satisfaction and increase repeat visits."},{"category":"Service","issue":"Inadequate service during peak hours.","suggestion":"Improve staffing levels during busy periods.","potential_impact":"Better service can lead to improved customer experience and loyalty."},{"category":"Ambiance","issue":"Poor restroom facilities and overall ambiance quality.","suggestion":"Upgrade and maintain restroom facilities to improve hygiene.","potential_impact":"Enhanced cleanliness and comfort can positively influence overall dining experience."},{"category":"Value for Money","issue":"Perception of overpriced items.","suggestion":"Review pricing of frequently criticized items and adjust accordingly.","potential_impact":"By addressing pricing concerns, customers may perceive a better value proposition."},{"category":"Online Presence","issue":"Limited engagement and outdated information online.","suggestion":"Revamp online platforms to offer current menu options and engage customers.","potential_impact":"Improved online presence can drive more foot traffic and online orders."}]}}
+{
+    "type": "Hotel",
+    "title": "Pleasant Homes",
+    "status": "Success",
+    "rating": 4.3,
+    "data_id": "0x3b080d00008ffac9:0xf63684be542341e7",
+    "address": "Edappally kanagarappady Road, Junction, near Kangrappady, Ernakulam, Kerala 682021, India",
+    "reviews": [
+        {
+            "user": "Akash Kumar",
+            "date": "October 08, 2024 at 07:55 PM UTC",
+            "rating": 5.0,
+            "review_text": "Very nice property good for family stay"
+        },
+        {
+            "user": "JEEVA SHAJI",
+            "date": "September 23, 2024 at 01:24 PM UTC",
+            "rating": 5.0,
+            "review_text": "The best stay in the busy city, at city vicinity, the place is excellently managed and kept clean. The highlight is its surrounding,  nearby a big town all basics are available. The staff and owner himself very helpfull, very supportive for family.we surely recommend this place for a peaceful stay in kochi city with ample parking space."
+        },
+        {
+            "user": "Boban KG",
+            "date": "September 11, 2024 at 10:02 AM UTC",
+            "rating": 5.0,
+            "review_text": "Very good rooms and parking space is best part, gated parking availability. The rooms are clean and very hostile host.\n100 percent supportive."
+        },
+        {
+            "user": "PRAANA '20",
+            "date": "September 09, 2024 at 06:10 AM UTC",
+            "rating": 5.0,
+            "review_text": "Our stay at pleasant homes is remarkable, as while  during our stay for about a week , we had a nice time in Ernakulam, had a peace stay and quiet environment.\nMy family had safe stay while I was out for my office. Nearby all essentials available.\n\nSure recommended place to stay a bit from busy city, though easily commuting."
+        },
+        {
+            "user": "Adithyan Krishnan",
+            "date": "September 02, 2024 at 05:57 AM UTC",
+            "rating": 5.0,
+            "review_text": "Good service"
+        },
+        {
+            "user": "Almirsad Gafoor",
+            "date": "September 01, 2024 at 11:29 AM UTC",
+            "rating": 2.0,
+            "review_text": "Poor Service not recommended"
+        },
+        {
+            "user": "Adarsh Krishnan",
+            "date": "September 01, 2024 at 10:49 AM UTC",
+            "rating": 1.0,
+            "review_text": "Worst behaviour from the service staff."
+        },
+        {
+            "user": "Arunkumar",
+            "date": "September 01, 2024 at 10:49 AM UTC",
+            "rating": 1.0,
+            "review_text": "Service is bad."
+        },
+        {
+            "user": "vishnu ram",
+            "date": "September 01, 2024 at 10:49 AM UTC",
+            "rating": 1.0,
+            "review_text": "Kashtam thanne muthalaali\nPoor service"
+        },
+        {
+            "user": "Almirsad Gafoor",
+            "date": "September 01, 2024 at 10:42 AM UTC",
+            "rating": 1.0,
+            "review_text": "Location & Room is good - service and coordination from the staffs (Riyas) is extremely poor.\n\nRooms are not allotting on priority simply delaying.\nFloors are sticky\nPoor coordination"
+        },
+        {
+            "user": "Sadic c.i",
+            "date": "August 30, 2024 at 04:29 PM UTC",
+            "rating": 5.0,
+            "review_text": "Very nice place to stay with family. Good location, good parking, safe,also need to mention the support from staff and owner."
+        },
+        {
+            "user": "Manjima V S",
+            "date": "August 10, 2024 at 02:23 PM UTC",
+            "rating": 5.0,
+            "review_text": "We can tell you, this will be a very great place where can stay with your family, very good hospitality and owner is very helpful.\nThe place is very close to a small town with hotels and neady things.\nOver all surely recomended place. \ud83d\udc4d\ud83c\udffb"
+        },
+        {
+            "user": "Santhosh Kk",
+            "date": "August 02, 2024 at 06:43 AM UTC",
+            "rating": 5.0,
+            "review_text": "\u0d35\u0d33\u0d30\u0d46 \u0d28\u0d32\u0d4d\u0d32 \u0d30\u0d40\u0d24\u0d3f\u0d2f\u0d3f\u0d7d \u0d24\u0d3e\u0d2e\u0d38\u0d3f\u0d15\u0d4d\u0d15\u0d3e\u0d28\u0d3e\u0d2f\u0d3f \u0d2a\u0d31\u0d4d\u0d31\u0d3f\u0d2f \u0d12\u0d30\u0d41 \u0d38\u0d4d\u0d25\u0d32\u0d2e\u0d3e\u0d23\u0d4d \u0d2b\u0d3e\u0d2e\u0d3f\u0d32\u0d3f\u0d2f\u0d41\u0d2e\u0d3e\u0d2f\u0d3f \u0d24\u0d3e\u0d2e\u0d38\u0d3f\u0d15\u0d4d\u0d15\u0d41\u0d28\u0d4d\u0d28\u0d24\u0d3f\u0d28\u0d4d \u0d35\u0d33\u0d30\u0d46 \u0d38\u0d28\u0d4d\u0d24\u0d4b\u0d37\u0d15\u0d30\u0d2e\u0d3e\u0d2f \u0d12\u0d30\u0d41 \u0d24\u0d3e\u0d2e\u0d38\u0d2e\u0d3e\u0d23\u0d4d \u0d1e\u0d19\u0d4d\u0d19\u0d7e\u0d15\u0d4d\u0d15\u0d4d \u0d05\u0d35\u0d3f\u0d1f\u0d46 \u0d09\u0d23\u0d4d\u0d1f\u0d3e\u0d2f\u0d3f\u0d30\u0d41\u0d28\u0d4d\u0d28\u0d24\u0d4d \u0d05\u0d35\u0d3f\u0d1f\u0d24\u0d4d\u0d24\u0d46 \u0d38\u0d4d\u0d31\u0d4d\u0d31\u0d3e\u0d2b\u0d3f\u0d28\u0d4d\u0d31\u0d46 \u0d38\u0d39\u0d15\u0d30\u0d23\u0d35\u0d41\u0d02 \u0d2e\u0d31\u0d4d\u0d31\u0d41\u0d33\u0d4d\u0d33\u0d35\u0d30\u0d41\u0d1f\u0d46 \u0d0e\u0d32\u0d4d\u0d32\u0d3e \u0d38\u0d2a\u0d4d\u0d2a\u0d4b\u0d7c\u0d1f\u0d4d\u0d1f\u0d41\u0d02 \u0d35\u0d33\u0d30\u0d46 \u0d2a\u0d4d\u0d30\u0d36\u0d02\u0d38\u0d28\u0d40\u0d2f\u0d2e\u0d3e\u0d23\u0d4d"
+        },
+        {
+            "user": "Suresh Ck",
+            "date": "August 02, 2024 at 06:33 AM UTC",
+            "rating": 5.0,
+            "review_text": "Well maintained place and good hospitality team. we like the stay at pleasant home very much, hospitality is very well. the place is clean and impressive. the staff staff behaviour is very kind and supportive. A good place to consider for a safe stay with family"
+        },
+        {
+            "user": "Shaji",
+            "date": "July 29, 2024 at 06:43 AM UTC",
+            "rating": 5.0,
+            "review_text": "Nice place to stay with family, we also recommend this place for out families and friends.\nGood support and cleanliness."
+        },
+        {
+            "user": "Arjun Nandakumar",
+            "date": "July 21, 2024 at 10:58 AM UTC",
+            "rating": 5.0,
+            "review_text": "One of best accommodation stayed recently, good hospitality, nice room and ambiance.\nSure stay property.\nRecom\ud83d\udc4c"
+        },
+        {
+            "user": "Ajay Johny",
+            "date": "July 19, 2024 at 07:37 AM UTC",
+            "rating": 5.0,
+            "review_text": "Good experience room was good"
+        },
+        {
+            "user": "Ajith P",
+            "date": "July 19, 2024 at 02:18 AM UTC",
+            "rating": 5.0,
+            "review_text": "The best place and it is budget friendly and well maintained. I would say the best service you would ever receive. Go for it if you would like a neat and clean place to stay with enough parking space."
+        },
+        {
+            "user": "Deepu MOHAN.K",
+            "date": "July 14, 2024 at 09:22 AM UTC",
+            "rating": 5.0,
+            "review_text": "Nice place, very supportive staff and owner. The place is located a bit from busy street but is easily accessible to city, all transports and all. Liked this place very much surely recommend"
+        },
+        {
+            "user": "Unnikrishnan Unnikrishnan",
+            "date": "July 11, 2024 at 09:21 AM UTC",
+            "rating": 5.0,
+            "review_text": "We stayed in pleasant group both hotels, it was really a good experience, We like the helpful nature of the owner and staff. I am surely recommending worth stay."
+        },
+        {
+            "user": "Sankar Narayanan",
+            "date": "July 10, 2024 at 04:28 PM UTC",
+            "rating": 5.0,
+            "review_text": "Very good rooms, we stayed here with family and was a very good experience for having nice rooms,good staff and area also.\nSurely mark this place as our recommend place to stay in ernakulam\ud83d\udc4d"
+        },
+        {
+            "user": "aarif khan aarif khan",
+            "date": "July 02, 2024 at 06:05 AM UTC",
+            "rating": 5.0,
+            "review_text": ""
+        },
+        {
+            "user": "sandeep gopi",
+            "date": "June 21, 2024 at 04:22 PM UTC",
+            "rating": 5.0,
+            "review_text": "Good rooms, good staff, wonderful full stay.\nThe place is pleasing and surely recommending.\nThe place has safe parking, and good shops nearby."
+        },
+        {
+            "user": "Vineetha Saxena",
+            "date": "June 21, 2024 at 01:02 PM UTC",
+            "rating": 5.0,
+            "review_text": "Nice rooms and surroundings, the place is very silent and clean.\nWe stayed for more than a week, for hospital purpose. Happy to say the place is surely a family place and with good host.\nVery best wishes to pleasant homes"
+        },
+        {
+            "user": "Mokjar Jaan",
+            "date": "June 18, 2024 at 04:15 PM UTC",
+            "rating": 5.0,
+            "review_text": "Bahuth acha place to stay. Recommended"
+        },
+        {
+            "user": "Hari Haran",
+            "date": "June 14, 2024 at 05:29 AM UTC",
+            "rating": 5.0,
+            "review_text": "Verry good"
+        },
+        {
+            "user": "Hashim",
+            "date": "June 12, 2024 at 02:13 PM UTC",
+            "rating": 5.0,
+            "review_text": "nice room ...."
+        },
+        {
+            "user": "Arun K Menon",
+            "date": "June 10, 2024 at 07:04 AM UTC",
+            "rating": 3.0,
+            "review_text": ""
+        },
+        {
+            "user": "Amal KA",
+            "date": "June 08, 2024 at 05:03 PM UTC",
+            "rating": 5.0,
+            "review_text": "Nice place,loved to stay here, impressive"
+        },
+        {
+            "user": "Riya Riyas",
+            "date": "June 08, 2024 at 02:11 PM UTC",
+            "rating": 5.0,
+            "review_text": "Very nice accommodation, good for family, I liked the stay in pleasant homes with my family. Stayed for 2 days, near by a good town area, with all available shops and market for fruits available.\nSurely recommended for families."
+        },
+        {
+            "user": "mugeeb rahuman",
+            "date": "May 12, 2024 at 05:37 PM UTC",
+            "rating": 5.0,
+            "review_text": ""
+        }
+    ],
+    "created_at": "2024-10-09 04:36:35 UTC",
+    "total_reviews": 31,
+    "hotel_analysis": {
+        "hotel_name": "Pleasant Homes",
+        "summary": "Pleasant Homes generally enjoys positive reviews for its clean and comfortable accommodations, peaceful location, and friendly staff. Recent feedback points to service inconsistencies and a lack of dining options as primary areas for improvement, suggesting a need for enhanced service training and expanded food services. The hotel benefits from high scores in cleanliness, value for money, and its convenient location, but must address service quality and online engagement to further boost guest satisfaction.",
+        "overall_sentiment": {
+            "average_score": 4.4,
+            "positive_percentage": 78.8,
+            "neutral_percentage": 1.6,
+            "negative_percentage": 19.7
+        },
+        "accommodation": {
+            "room_quality": [
+                "Rooms are noted for being clean and well-maintained, with ample space and pleasing ambiance.",
+                "Very good rooms and parking space is best part",
+                "The rooms are clean and very hostile host"
+            ],
+            "common_praises": [
+                "Guests frequently praise the room cleanliness, comfort, and maintenance.",
+                "The hotel is considered suitable for families, offering a peaceful environment.",
+                "Rooms are clean and well-maintained",
+                "Peaceful and quiet environment"
+            ],
+            "common_criticisms": [],
+            "suggestions": [
+                "Consider adding more amenities in rooms to enhance comfort",
+                "Ensure maintenance is consistently high to prevent guests from finding faults"
+            ]
+        },
+        "service": {
+            "strengths": [
+                "Staff is generally described as friendly and supportive, with good hospitality.",
+                "Good service, especially noted by multiple guests",
+                "Staff and owner are very helpful and supportive"
+            ],
+            "weaknesses": [
+                "Several reviews highlight poor service and coordination from staff, specifically mentioning delays and unprofessional behavior from some staff members.",
+                "Occasional reports of poor service need addressing"
+            ],
+            "suggestions": [
+                "Conduct service training for staff to improve coordination and response times.",
+                "Implement a protocol for prioritizing room assignments and improve check-in efficiency.",
+                "Implement regular training sessions to maintain high service standards",
+                "Address any service-related complaints promptly to prevent recurrence"
+            ]
+        },
+        "amenities": {
+            "praised_features": [
+                "Good parking facilities and proximity to shops are highlighted.",
+                "Gated parking availability"
+            ],
+            "criticized_features": [],
+            "suggestions": [
+                "Consider adding recreational amenities such as a gym or pool to enhance guest experience"
+            ]
+        },
+        "food_and_dining": {
+            "restaurant_quality": "No specific feedback available on dining quality, indicating potential need for varied and advertised food services.",
+            "breakfast_feedback": "No specific feedback on breakfast offerings.",
+            "praised_items": [],
+            "criticized_items": [],
+            "suggestions": [
+                "Consider offering a complimentary breakfast or coffee service to enhance guest experience.",
+                "Encourage guests to provide feedback on dining experiences to identify strengths and areas for improvement"
+            ]
+        },
+        "location_and_accessibility": {
+            "positive_aspects": [
+                "The hotel is located near a small town, with good access to shops and essential services.",
+                "The location is considered peaceful yet accessible to the city.",
+                "Quiet environment",
+                "Located near a big town with essentials easily accessible"
+            ],
+            "negative_aspects": [],
+            "suggestions": [
+                "Provide more detailed information on nearby attractions in promotional materials to highlight the benefits of the location"
+            ]
+        },
+        "value_for_money": {
+            "perceived_value": "The hotel is widely considered to be budget-friendly, offering good value for money.",
+            "positive_factors": [
+                "Clean rooms, good location, and helpful staff are perceived as providing good value.",
+                "Peaceful stay with easy commuting options"
+            ],
+            "negative_factors": [],
+            "suggestions": [
+                "Maintain competitive pricing and occasionally offer promotional packages to attract more guests"
+            ]
+        },
+        "online_presence": {
+            "website_feedback": [],
+            "social_media_feedback": [],
+            "suggestions": [
+                "Enhance online engagement by responding to reviews and actively updating potential guests about improvements and offerings.",
+                "Enhance online presence by actively engaging with guests on social media platforms",
+                "Ensure the hotel website is updated with accurate information about amenities and services"
+            ]
+        },
+        "top_improvement_priorities": [
+            {
+                "category": "Service",
+                "issue": "Occasional reports of poor service",
+                "suggestion": "Implement regular training sessions to maintain consistent service quality",
+                "potential_impact": "High impact on guest satisfaction and reviews by improving service consistency."
+            },
+            {
+                "category": "Online Presence",
+                "issue": "Limited engagement and information online",
+                "suggestion": "Increase social media interaction and ensure website accuracy",
+                "potential_impact": "Moderate impact by potentially increasing bookings through improved online engagement and presence."
+            },
+            {
+                "category": "Food and Dining",
+                "issue": "Lack of dining options mentioned in reviews.",
+                "suggestion": "Introduce a basic dining service or partnerships with local restaurants for guest convenience.",
+                "potential_impact": "Increased guest satisfaction through convenience and perceived value."
+            },
+            {
+                "category": "Amenities",
+                "issue": "Limited recreational amenities",
+                "suggestion": "Add a gym or pool to attract more guests seeking these features",
+                "potential_impact": "Moderate impact on attracting more family and leisure guests."
+            },
+            {
+                "category": "Accommodation",
+                "issue": "Limited in-room amenities",
+                "suggestion": "Enhance room amenities to improve guest comfort, such as adding tea/coffee makers or improving Wi-Fi connectivity",
+                "potential_impact": "Moderate impact on guest comfort and satisfaction."
+            }
+        ]
+    }
+}

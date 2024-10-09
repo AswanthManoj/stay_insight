@@ -1,32 +1,34 @@
-import os, uuid, asyncio
-from typing import Optional
+import config, os, json
 from fastapi import FastAPI
 from dotenv import load_dotenv
+from config import get_settings
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from review_ai.analysis import get_task_manager
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi import Request, HTTPException, BackgroundTasks
 from review_ai.utils import SuggestionRequest, SuggestionResult
+from review_ai.analysis import get_task_manager, download_result
 
-
-load_dotenv()
 
 # Example location to check on full review analysis (only has 30 reviews) for faster testing
 "Pleasant Homes Junction, near Kangrappady, Kangarappady, Ernakulam, Kerala, India"
 
+# Hotel with 126 reviews
+"Gypsy Hotel CUSAT"
+
 
 app = FastAPI()
 manager = get_task_manager(
-    delay=0.5,                              # Delay in seconds between paginations through SerpApi reviews to avoid rate limiting
-    country="uk",                           # Country for searching places based of for autocomplete
-    language="en",                          # Language for quering for places
-    batch_size=10,                          # Batch size for doing full analysis
-    num_reviews=8,                          # Number of reviews to analyze used in instant analysis
-    num_suggestion=5,                       # Number of autocomplete suggestions to return
-    model=os.getenv("OPENAI_MODEL"),        # OpenAI model to use for analysis
-    serpapi_key=os.getenv("SERPAPI_KEY"),   # SerpApi API key
-    openai_key=os.getenv("OPENAI_API_KEY"), # OpenAI API key
+    model =          get_settings().openai_model,
+    delay =          get_settings().delay,                              
+    country =        get_settings().country,                           
+    language =       get_settings().language,                          
+    batch_size =     get_settings().batch_size, 
+    openai_key =     get_settings().openai_api_key,                          
+    num_reviews =    get_settings().num_reviews,  
+    serpapi_key =    get_settings().serpapi_key,                          
+    num_suggestion = get_settings().num_suggestion,                       
 )
 templates = Jinja2Templates(directory="review_ai/templates")
 app.mount("/static", StaticFiles(directory="review_ai/static"), name="static")
@@ -145,11 +147,46 @@ async def get_analysis_result(token: str):
     """
     try:
         result = await manager.get_analysis_result(token)
+        # with open("output.json", "w") as f:
+        #     f.write(json.dumps(result, indent=4))
+        # with open("output.json", "r") as f:
+        #     result = json.load(f)
         return JSONResponse(content=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+@app.get("/api/download/{token}")
+async def download_analysis_result(token: str):
+    """
+    Download the analysis result for the given token.
+
+    Args:
+        token (str): The token of the analysis result to be downloaded.
+
+    Returns:
+        Response: A response containing the analysis result or an error message if any exceptions occur.
+
+    Raises:
+        HTTPException: If any exceptions occur during the download of the analysis result.
+    """
+    try:
+        pdf_content = await download_result(
+            token=token,
+            host=get_settings().host, 
+            port=get_settings().port, 
+        )
+        return Response(content=pdf_content, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=analysis.pdf"})
+        pass
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "app:app", 
+        host=get_settings().host, 
+        port=get_settings().port, 
+        reload=get_settings().reload
+    )

@@ -1,4 +1,4 @@
-import yaml
+import yaml, os
 from openai import OpenAI
 from pprint import pprint
 import asyncio, uuid, httpx
@@ -6,6 +6,7 @@ from datetime import datetime
 from fastapi import BackgroundTasks
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
+from playwright.async_api import async_playwright
 from review_ai.utils import (AnalysisResult, APIError, NoResultsError, 
 SuggestionResult, Review, Suggestion, DataProcessorError, HotelAnalysis)
 from review_ai.prompt import SYSTEM_PROMPT, DATA_PROMPT, BATCH_ANALYTICS_PROMPT
@@ -536,6 +537,63 @@ class TaskManager:
             return {"status": "in_progress"}
         else:
             raise ValueError(f"Analysis failed with error: {result['error']}")
+  
+  
+  
+async def download_result(host: str, port: int, token: str) -> str:
+    url = f"http://{host}:{port}/retrieve"
+    pdf_filename = f"/tmp/{uuid.uuid4()}.pdf"
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page()
+        
+        await page.set_viewport_size({"width": 1920, "height": 1080})
+        await page.goto(url)
+        await page.fill('#tokenInput', token)
+        await page.click('#retrieveButton')
+        await page.wait_for_selector('#analysisContent', state='visible', timeout=10000)
+        
+        await page.evaluate('''() => {
+            const element = document.getElementById('analysisContent');
+            const rect = element.getBoundingClientRect();
+            document.body.innerHTML = '';
+            document.body.appendChild(element);
+            
+            const divToRemove = document.evaluate(
+                '//*[@id="analysisContent"]/div/div/div[2]/div',
+                document,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null
+            ).singleNodeValue;
+            if (divToRemove) {
+                divToRemove.remove();
+            }
+            const buttonToRemove = document.evaluate(
+                '//*[@id="downloadAnalysis"]',
+                document,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null
+            ).singleNodeValue;
+            if (buttonToRemove) {
+                buttonToRemove.remove();
+            }
+            
+            document.body.style.margin = '0';
+            document.body.style.width = rect.width + 'px';
+            document.body.style.height = rect.height + 'px';
+        }''')
+        
+        await page.pdf(path=pdf_filename, print_background=True)
+        await browser.close()
+        
+    with open(pdf_filename, 'rb') as file:
+        pdf_content = file.read()
+    os.remove(pdf_filename)
+
+    return pdf_content
     
 
 
