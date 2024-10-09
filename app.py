@@ -22,8 +22,7 @@ app = FastAPI()
 manager = get_task_manager(
     model =          get_settings().openai_model,
     delay =          get_settings().delay,                              
-    country =        get_settings().country,                           
-    language =       get_settings().language,                          
+    country =        get_settings().country,                                                    
     batch_size =     get_settings().batch_size, 
     openai_key =     get_settings().openai_api_key,                          
     num_reviews =    get_settings().num_reviews,  
@@ -86,10 +85,11 @@ async def autocomplete(request: SuggestionRequest):
         JSONResponse: A JSON response containing the autocomplete suggestions.
     """
     try:
+        print(f"query: {request.value}, lat: {request.latitude}, long: {request.longitude}")
         suggestion = await manager.autocomplete(
-            query=request.value,
-            latitude=request.latitude if request.latitude is not None else 9.9185,
-            longitude=request.longitude if request.longitude is not None else 76.2558,
+                query=request.value,
+                latitude=request.latitude if request.latitude is not None else 9.9185,
+                longitude=request.longitude if request.longitude is not None else 76.2558,
         )
         return JSONResponse(content=suggestion.model_dump())
     except Exception as e:
@@ -114,6 +114,8 @@ async def analyze_restaurant(request: Request, background_tasks: BackgroundTasks
     data = await request.json()
     data_id = data.get("dataId")
     analysis_type = data.get("analysisType")
+    
+    print(f"data_id: {data_id}, analysis_type: {analysis_type}")
 
     if analysis_type == "instant":
         try:

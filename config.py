@@ -1,4 +1,5 @@
 import os
+from pprint import pprint
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
@@ -12,7 +13,6 @@ class Settings(BaseModel):
     delay:          float = 0.5               # Delay in seconds between paginations through SerpApi reviews to avoid rate limiting
     reload:         bool                      # Auto reload on file changes
     country:        str = "uk"                # Country for searching places based of for autocomplete
-    language:       str = "en"                # Language for quering for places
     batch_size:     int = 30                  # Batch size for doing full analysis
     num_reviews:    int = 40                  # Number of reviews to analyze used in instant analysis
     serpapi_key:    str                       # SerpApi API key
@@ -23,6 +23,10 @@ class Settings(BaseModel):
     def __init__(self, **data):
         if isinstance(data.get("port"), str):
             data["port"] = int(data["port"])
+            data["delay"] = float(data["delay"])
+            data["batch_size"] = int(data["batch_size"])
+            data["num_reviews"] = int(data["num_reviews"])
+            data["num_suggestion"] = int(data["num_suggestion"])
         super().__init__(**data)
         
     
@@ -37,9 +41,8 @@ def get_settings() -> Settings:
             delay =          os.getenv("DELAY", 0.5),
             reload =         os.getenv("RELOAD", False),
             country =        os.getenv("COUNTRY", "uk"),
-            language =       os.getenv("LANGUAGE", "en"),
-            batch_size =     os.getenv("BATCH_SIZE", 30),
-            num_reviews =    os.getenv("NUM_REVIEWS", 40),
+            batch_size =     os.getenv("BATCH_SIZE", 25),
+            num_reviews =    os.getenv("NUM_REVIEWS", 30),
             serpapi_key =    os.getenv("SERPAPI_KEY"),
             openai_model =   os.getenv("OPENAI_MODEL", "gpt-4o-2024-08-06"),
             num_suggestion = os.getenv("NUM_SUGGESTION", 5),
@@ -49,3 +52,5 @@ def get_settings() -> Settings:
     return SETTINGS
 
 get_settings()
+
+pprint(SETTINGS.model_dump())

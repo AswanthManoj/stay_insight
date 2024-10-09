@@ -32,7 +32,6 @@ Here are the variables needed to configure if done through `.env`:
 - **DELAY**: Delay in seconds between paginations through SerpApi reviews to avoid rate limiting
 - **RELOAD**: Auto reload on file changes
 - **COUNTRY**: Country for searching places based of for autocomplete
-- **LANGUAGE**: Language for quering for places
 - **BATCH_SIZE**: Batch size for doing full analysis
 - **NUM_REVIEWS**: Number of reviews to analyze used in instant analysis
 - **SERPAPI_KEY**: SerpApi API key
