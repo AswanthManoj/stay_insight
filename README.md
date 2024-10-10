@@ -10,7 +10,7 @@
 Create a `.env` file and fill with the required api key informations like for example:
 
 ```env
-OPENAI_MODEL=gpt-4o-2024-08-06
+OPENAI_MODEL=gpt-4o-mini
 SERPAPI_KEY=<serpapi-key>
 OPENAI_API_KEY=<openai-api-key>
 ```
@@ -34,6 +34,7 @@ Here are the variables needed to configure if done through `.env`:
 - **COUNTRY**: Country for searching places based of for autocomplete
 - **BATCH_SIZE**: Batch size for doing full analysis
 - **NUM_REVIEWS**: Number of reviews to analyze used in instant analysis
+- **MAX_REVIEWS**: Maximum number of reviews to take for full analysis
 - **SERPAPI_KEY**: SerpApi API key
 - **OPENAI_MODEL**: OpenAI model to use for analysis
 - **NUM_SUGGESTION**: Number of autocomplete suggestions to return

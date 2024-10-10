@@ -33,7 +33,6 @@ templates = Jinja2Templates(directory="review_ai/templates")
 app.mount("/static", StaticFiles(directory="review_ai/static"), name="static")
 
 
-
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """
@@ -42,6 +41,7 @@ async def index(request: Request):
     Args:
         request (Request): The request object.
     """
+    await manager.start_cleanup_task()
     return templates.TemplateResponse("index.html", {"request": request})
 
 
@@ -56,6 +56,7 @@ async def analyze(request: Request):
     Returns:
         HTMLResponse: The rendered template as an HTML response.
     """
+    await manager.start_cleanup_task()
     return templates.TemplateResponse("analyze.html", {"request": request})
 
 
@@ -70,6 +71,7 @@ async def retrieve(request: Request):
     Returns:
         HTMLResponse: The rendered template as an HTML response.
     """
+    await manager.start_cleanup_task()
     return templates.TemplateResponse("retrieve.html", {"request": request})
 
 
@@ -87,9 +89,9 @@ async def autocomplete(request: SuggestionRequest):
     try:
         print(f"query: {request.value}, lat: {request.latitude}, long: {request.longitude}")
         suggestion = await manager.autocomplete(
-                query=request.value,
-                latitude=request.latitude if request.latitude is not None else 9.9185,
-                longitude=request.longitude if request.longitude is not None else 76.2558,
+            query=request.value,
+            latitude=request.latitude if request.latitude is not None else 9.9185,
+            longitude=request.longitude if request.longitude is not None else 76.2558,
         )
         return JSONResponse(content=suggestion.model_dump())
     except Exception as e:
@@ -118,11 +120,11 @@ async def analyze_restaurant(request: Request, background_tasks: BackgroundTasks
     print(f"data_id: {data_id}, analysis_type: {analysis_type}")
 
     if analysis_type == "instant":
-        try:
+        # try:
             review_result = await manager.get_instant_analysis(data_id) 
             return JSONResponse(content=review_result.model_dump())
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+        # except Exception as e:
+        #     raise HTTPException(status_code=500, detail=str(e))
     elif analysis_type == "full":
         try:
             token = await manager.get_full_analysis(data_id, background_tasks)

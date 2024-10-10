@@ -1,4 +1,5 @@
-import yaml, os
+import aiosqlite
+import yaml, os, json
 from openai import OpenAI
 from pprint import pprint
 import asyncio, uuid, httpx
@@ -13,25 +14,133 @@ from review_ai.prompt import SYSTEM_PROMPT, DATA_PROMPT, BATCH_ANALYTICS_PROMPT
 
 
 
-class DataProcessor:
-    
-    def __init__(self, api_key: str, num_reviews: int=50, num_suggestion: int=5, language: str="en", country: str="in", delay: float=1) -> None:
+class DataBase:
+    """
+    A class to handle asynchronous SQLite database operations for storing and retrieving place reviews for place data_id.
+    """
+    def __init__(self, database_name: str = "reviews.db") -> None:
         """
-        Initialize DataProcessor with the given parameters.
+        Initialize a `DataBase` instance.
 
         Args:
-        - api_key (str): SerpAPI API key.
-        - num_reviews (int): Number of reviews to retrieve. Defaults to 50.
-        - num_suggestion (int): Number of suggestions to retrieve. Defaults to 5.
-        - language (str): Language of the reviews and suggestions to retrieve. Defaults to "en".
-        - country (str): Country of the reviews and suggestions to retrieve. Defaults to "in".
-        - delay (float): Delay in seconds between API requests. Defaults to 1.
+        - database_name (str, optional): The name of the SQLite database file to use. Defaults to "reviews.db".
+        """
+        self.database_name = database_name
+        self.full_table_name = "review_analysis_full"
+        self.instant_table_name = "review_analysis_instant"
+
+    async def create_tables(self) -> None:
+        """
+        Create SQLite tables to store review analysis results.
+
+        Two tables are created: review_analysis_instant and review_analysis_full.
+        Each table has two columns: `data_id` and `analysis`. 
+        The `data_id` column is the primary key.
+        The `analysis` column stores the JSON-serialized review analysis result.
+
+        The tables are created if they do not already exist. If the tables already exist, this method does nothing.
+        """
+        async with aiosqlite.connect(self.database_name) as conn:
+            for table_name in [self.instant_table_name, self.full_table_name]:
+                await conn.execute(f'''
+                    CREATE TABLE IF NOT EXISTS {table_name} (
+                        data_id TEXT PRIMARY KEY,
+                        analysis TEXT
+                    )
+                ''')
+            await conn.commit()
+
+    async def check_and_retrieve_place(self, data_id: str, data_type: Optional[str] = None) -> List[Dict[str, any]]:
+        """
+        Check if a review analysis exists in the database and retrieve it if it does.
+
+        Args:
+        - data_id (str): The unique identifier for the review analysis to be retrieved.
+        - data_type (Optional[str]): The type of analysis to retrieve. If None, both types are retrieved.
+
+        Returns:
+        - List[Dict[str, any]]: A list of review analyses matching the criteria. Each item is a dictionary
+          with keys "data_id", "type", and "analysis". Returns an empty list if no matching analyses are found.
+        """
+        result = []
+        async with aiosqlite.connect(self.database_name) as conn:
+            if data_type in ["instant", None]:
+                async with conn.execute(f"SELECT data_id, analysis FROM {self.instant_table_name} WHERE data_id = ?", (data_id,)) as cursor:
+                    if row := await cursor.fetchone():
+                        result.append({
+                            "data_id": row[0],
+                            "type": "instant",
+                            "analysis": json.loads(row[1])
+                        })
+            
+            if data_type in ["full", None]:
+                async with conn.execute(f"SELECT data_id, analysis FROM {self.full_table_name} WHERE data_id = ?", (data_id,)) as cursor:
+                    if row := await cursor.fetchone():
+                        result.append({
+                            "data_id": row[0],
+                            "type": "full",
+                            "analysis": json.loads(row[1])
+                        })
+        
+        return result
+
+    async def save_new_data(self, data_id: str, data_type: str, data: Dict[str, any]) -> Optional[str]:
+        """
+        Save new review analysis data in the database.
+
+        Args:
+        - data_id (str): The unique identifier for the review analysis to be saved.
+        - data_type (str): The type of analysis, either "instant" or "full".
+        - data (Dict[str, any]): The review analysis result to be saved.
+
+        Returns:
+        - str: The data_id if the data is saved successfully, otherwise None.
+
+        If a review analysis with the same data_id already exists in the respective table, 
+        the existing entry will be replaced with the new data.
+
+        Raises:
+        - ValueError: If the data_type is not "instant" or "full".
+        """
+        if data_type not in ["instant", "full"]:
+            raise ValueError("data_type must be either 'instant' or 'full'")
+
+        table_name = self.instant_table_name if data_type == "instant" else self.full_table_name
+        analysis_json = json.dumps(data)
+        
+        try:
+            async with aiosqlite.connect(self.database_name) as conn:
+                await conn.execute(f"INSERT OR REPLACE INTO {table_name} (data_id, analysis) VALUES (?, ?)", 
+                                   (data_id, analysis_json))
+                await conn.commit()
+            return data_id
+        except aiosqlite.Error as e:
+            print(f"Error saving data: {e}")
+            return None
+
+
+
+class DataProcessor:
+    
+    def __init__(self, api_key: str, num_reviews: int=50, max_reviews: int=150, num_suggestion: int=5, language: str="en", country: str="in", delay: float=1) -> None:
+        """
+        Constructor for DataProcessor.
+
+        Args:
+        - api_key (str): SerpApi API key.
+        - num_reviews (int): Number of reviews to fetch for each page. Defaults to 50.
+        - max_reviews (int): Maximum number of reviews to process. Defaults to 150.
+        - num_suggestion (int): Number of autocomplete suggestions to return. Defaults to 5.
+        - language (str): Language for searching places. Defaults to "en".
+        - country (str): Country for searching places. Defaults to "in".
+        - delay (float): Delay in seconds between each page of reviews. Defaults to 1.
         """
         self.delay = delay
         self.api_key = api_key
         self.country = country
         self.language = language
         self.num_reviews = num_reviews
+        self.max_reviews = max_reviews
         self.num_suggestion = num_suggestion
         self.base_url = "https://serpapi.com/search.json"
         
@@ -107,8 +216,7 @@ class DataProcessor:
                     _reviews.extend(new_reviews)
 
                     if use_full_reviews:
-                        total_reviews = place_info.get("reviews", 0)
-                        if len(_reviews) >= total_reviews:
+                        if len(_reviews) >= self.max_reviews:
                             break
                     elif len(_reviews) >= self.num_reviews:
                         break
@@ -372,6 +480,7 @@ class TaskManager:
         self.cleanup_task = None
         self.analysis_results = {}
         self.batch_size = batch_size
+        self.database = get_database()
         self.data_processor = data_processor
         self.review_analyzer = review_analyzer
         
@@ -383,6 +492,7 @@ class TaskManager:
         and removes them from the cache. If the task is already running, this function does nothing.
         """
         if self.cleanup_task is None:
+            await self.database.create_tables()
             self.cleanup_task = asyncio.create_task(self.cleanup_old_results())
 
     async def cleanup_old_results(self):
@@ -429,11 +539,21 @@ class TaskManager:
         Raises:
         - ValueError: If no reviews are found for the given data ID.
         """
+        
+        # Check if analysis already in db
+        existing_data = await self.database.check_and_retrieve_place(data_id, "instant")
+        if existing_data:
+            return AnalysisResult(**existing_data[0]['analysis'])
+        
         review_result = await self.data_processor.get_reviews(data_id=data_id) 
         if review_result.reviews == []:
             raise ValueError(f"No reviews found for data ID: {data_id}")
         review_result = await self.review_analyzer.generate_analysis(review_result)
         review_result.reviews = self.data_processor.sort_reviews_by_date(review_result.reviews, reverse=True)
+        
+        # Save in db
+        await self.database.save_new_data(data_id, "instant", review_result.model_dump())
+        
         return review_result
     
     async def get_full_analysis(self, data_id: str, background_tasks: BackgroundTasks) -> dict:
@@ -449,10 +569,20 @@ class TaskManager:
 
         The full analysis is run asynchronously in the background, and the token can be used to retrieve the result.
         """
-        token = str(uuid.uuid4())
-        background_tasks.add_task(self._process_full_analysis_, data_id, token)
-        self.analysis_results[token] = {"status": "in_progress", "created_at": datetime.now()}
-        return {"token": token}
+    
+        # Check if analysis already in db
+        existing_data = await self.database.check_and_retrieve_place(data_id, "full")
+        if existing_data:
+            self.analysis_results[data_id] = {
+                "status": "completed",
+                "created_at": datetime.now(),
+                "data": existing_data[0]['analysis']
+            }
+            return {"token": data_id}
+        
+        background_tasks.add_task(self._process_full_analysis_, data_id, data_id)
+        self.analysis_results[data_id] = {"status": "in_progress", "created_at": datetime.now()}
+        return {"token": data_id}
     
     async def _process_full_analysis_(self, data_id: str, token: str) -> None:
         """
@@ -501,17 +631,22 @@ class TaskManager:
             final_results = await combine_level(batch_results, batch_size=self.batch_size//2)
             final_results[0].reviews = self.data_processor.sort_reviews_by_date(review_result.reviews, reverse=True)
             
+            # Save in db
+            await self.database.save_new_data(data_id, "full", final_results[0].model_dump())
+            
             self.analysis_results[token] = {
                 "status": "completed", 
                 "created_at": datetime.now(),
                 "data": final_results[0].model_dump(),
             }
+            print(f"Full analysis completed for token: {token}")
         except Exception as e:
             self.analysis_results[token] = {
                 "error": str(e),
                 "status": "failed", 
                 "created_at": datetime.now()
             }
+            print(f"Full analysis failed for token: {token} with error: {e}")
             
     async def get_analysis_result(self, token: str) -> dict:
         """
@@ -597,28 +732,15 @@ async def download_result(host: str, port: int, token: str) -> str:
     
 
 
+DATABASE = None
+def get_database(database_name: str = "reviews.db") -> DataBase:
+    global DATABASE
+    if DATABASE is None:
+        DATABASE = DataBase(database_name)
+    return DATABASE
+
 TASK_MANAGER = None
-def get_task_manager(serpapi_key: str, model: str, openai_key: str, num_reviews: int=50, num_suggestion: int=5, batch_size: int=30, language: str="en", country: str="in", delay: float=1) -> TaskManager:
-    """
-    Get the TaskManager instance.
-
-    The TaskManager is a singleton class that is responsible for managing the analysis tasks.
-    It uses a ReviewAnalyzer to analyze reviews and a DataProcessor to retrieve reviews and suggestions.
-
-    Args:
-    - serpapi_key (str): The SerpAPI API key.
-    - model (str): The name of the OpenAI model to use for analysis.
-    - openai_key (str): The OpenAI API key.
-    - num_reviews (int): The number of reviews to retrieve. Defaults to 50.
-    - num_suggestion (int): The number of suggestions to retrieve. Defaults to 5.
-    - batch_size (int): The batch size for analysis. Defaults to 30.
-    - language (str): The language of the reviews and suggestions to retrieve. Defaults to "en".
-    - country (str): The country of the reviews and suggestions to retrieve. Defaults to "in".
-    - delay (float): The delay in seconds between API requests. Defaults to 1.
-
-    Returns:
-    - TaskManager: The TaskManager instance.
-    """
+def get_task_manager(serpapi_key: str, model: str, openai_key: str, num_reviews: int=50, max_reviews: int=150, num_suggestion: int=5, batch_size: int=30, language: str="en", country: str="in", delay: float=1) -> TaskManager:
     global TASK_MANAGER
     if TASK_MANAGER is None:
         TASK_MANAGER = TaskManager(
@@ -636,6 +758,7 @@ def get_task_manager(serpapi_key: str, model: str, openai_key: str, num_reviews:
                 language=language,
                 api_key=serpapi_key,
                 num_reviews=num_reviews, 
+                max_reviews=max_reviews,
                 num_suggestion=num_suggestion, 
             )
         )
