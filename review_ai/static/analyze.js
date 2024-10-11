@@ -170,6 +170,23 @@ function createSkeletonLoader() {
     `;
 }
 
+function displayError(error) {
+    let errorMessage;
+    
+    if (error === 'no_reviews') {
+        errorMessage = "Oops! It looks like the restaurant has no reviews.";
+    } else {
+        errorMessage = "Oops! Something unexpected happened...";
+    }
+
+    analysisContent.innerHTML = `
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong class="font-bold">Error:</strong>
+            <span class="block sm:inline">${errorMessage}</span>
+        </div>
+    `;
+}
+
 function getAnalysis() {
     if (selectedDataId) {
         tokenSection.classList.add('hidden');
@@ -212,7 +229,13 @@ function getAnalysis() {
         .then(data => {
             if (currentAnalysisType === 'instant') {
                 tokenSection.classList.add('hidden');
-                displayAnalysis(data);
+                
+                if (data.status === "no_reviews") {
+                    displayError(data.status);
+                }
+                else {
+                    displayAnalysis(data);
+                }
             } else {
                 analysisToken.textContent = data.token;
                 tokenSection.classList.remove('hidden');

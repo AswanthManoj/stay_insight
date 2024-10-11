@@ -8,23 +8,25 @@ function retrieveAnalysis() {
         analysisContent.innerHTML = createSkeletonLoader();
 
         fetch(`/api/analysis/${token}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.status === "in_progress") {
-                    displayInProgressMessage();
-                } else {
-                    displayAnalysis(data);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                displayError(error);
-            });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === "in_progress") {
+                displayInProgressMessage();
+            } else if (data.status === "failed") {
+                displayError(data.error);
+            } else {
+                displayAnalysis(data);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            displayError(error);
+        });
     }
 }
 
@@ -395,10 +397,18 @@ function displayInProgressMessage() {
 }
 
 function displayError(error) {
+    let errorMessage;
+    
+    if (error === 'no_reviews') {
+        errorMessage = "Oops! It looks like the restaurant has no reviews.";
+    } else {
+        errorMessage = "Ooh oh! The requested report has expired or the token is invalid. Reports are typically available for 24 hours. Please initiate a new analysis.";
+    }
+
     analysisContent.innerHTML = `
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
             <strong class="font-bold">Error:</strong>
-            <span class="block sm:inline">Your token has been expired!</span>
+            <span class="block sm:inline">${errorMessage}</span>
         </div>
     `;
 }

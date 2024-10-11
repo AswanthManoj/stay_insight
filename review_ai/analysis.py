@@ -546,8 +546,9 @@ class TaskManager:
             return AnalysisResult(**existing_data[0]['analysis'])
         
         review_result = await self.data_processor.get_reviews(data_id=data_id) 
-        if review_result.reviews == []:
-            raise ValueError(f"No reviews found for data ID: {data_id}")
+        if review_result.reviews == [] or (not review_result.reviews):
+            return {"status": "no_reviews", "data_id": data_id}
+        
         review_result = await self.review_analyzer.generate_analysis(review_result)
         review_result.reviews = self.data_processor.sort_reviews_by_date(review_result.reviews, reverse=True)
         
@@ -602,8 +603,8 @@ class TaskManager:
             # Get full hotel reviews
             review_result = await self.data_processor.get_reviews(data_id=data_id, use_full_reviews=True)
             
-            if not review_result.reviews:
-                raise ValueError(f"No reviews found for data ID: {data_id}")
+            if review_result.reviews == [] or (not review_result.reviews):
+                raise ValueError("no_reviews")
             
             batches = [review_result.reviews[i:i + self.batch_size] for i in range(0, len(review_result.reviews), self.batch_size)]
             
@@ -671,7 +672,7 @@ class TaskManager:
         elif result["status"] == "in_progress":
             return {"status": "in_progress"}
         else:
-            raise ValueError(f"Analysis failed with error: {result['error']}")
+            return {"status": "failed", "error": "no_reviews"}
   
   
   

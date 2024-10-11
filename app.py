@@ -120,11 +120,13 @@ async def analyze_restaurant(request: Request, background_tasks: BackgroundTasks
     print(f"data_id: {data_id}, analysis_type: {analysis_type}")
 
     if analysis_type == "instant":
-        # try:
+        try:
             review_result = await manager.get_instant_analysis(data_id) 
+            if isinstance(review_result, dict):
+                return JSONResponse(content=review_result)
             return JSONResponse(content=review_result.model_dump())
-        # except Exception as e:
-        #     raise HTTPException(status_code=500, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
     elif analysis_type == "full":
         try:
             token = await manager.get_full_analysis(data_id, background_tasks)
@@ -181,7 +183,6 @@ async def download_analysis_result(token: str):
             port=get_settings().port, 
         )
         return Response(content=pdf_content, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=analysis.pdf"})
-        pass
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
