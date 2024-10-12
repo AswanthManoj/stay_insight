@@ -126,6 +126,7 @@ async def analyze_restaurant(request: Request, background_tasks: BackgroundTasks
                 return JSONResponse(content=review_result)
             return JSONResponse(content=review_result.model_dump())
         except Exception as e:
+            print (f"Error: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     elif analysis_type == "full":
         try:
