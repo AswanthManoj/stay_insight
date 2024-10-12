@@ -122,23 +122,25 @@ class DataBase:
 
 class DataProcessor:
     
-    def __init__(self, api_key: str, num_reviews: int=50, max_reviews: int=150, num_suggestion: int=5, language: str="en", country: str="in", delay: float=1) -> None:
+    def __init__(self, api_key: str, num_reviews: int=50, max_reviews: int=150, num_suggestion: int=5, language: str="en", country: str="in", delay: float=1, verbosity: bool=False) -> None:
         """
-        Constructor for DataProcessor.
+        Initialize a DataProcessor object.
 
         Args:
-        - api_key (str): SerpApi API key.
-        - num_reviews (int): Number of reviews to fetch for each page. Defaults to 50.
-        - max_reviews (int): Maximum number of reviews to process. Defaults to 150.
-        - num_suggestion (int): Number of autocomplete suggestions to return. Defaults to 5.
-        - language (str): Language for searching places. Defaults to "en".
-        - country (str): Country for searching places. Defaults to "in".
-        - delay (float): Delay in seconds between each page of reviews. Defaults to 1.
+        - api_key (str): The SERPAPI key to use for searching Google Reviews.
+        - num_reviews (int): The number of reviews to fetch in each search. Defaults to 50.
+        - max_reviews (int): The maximum number of reviews to fetch in total. Defaults to 150.
+        - num_suggestion (int): The number of autocomplete suggestions to fetch. Defaults to 5.
+        - language (str): The language of the reviews to fetch. Defaults to "en".
+        - country (str): The country code of the location to search. Defaults to "in".
+        - delay (float): The delay in seconds between each search. Defaults to 1.
+        - verbosity (bool): Whether to print debug messages. Defaults to False.
         """
         self.delay = delay
         self.api_key = api_key
         self.country = country
         self.language = language
+        self.verbosity = verbosity
         self.num_reviews = num_reviews
         self.max_reviews = max_reviews
         self.num_suggestion = num_suggestion
@@ -201,6 +203,7 @@ class DataProcessor:
 
         try:
             async with httpx.AsyncClient() as client:
+                count = 0
                 while True:
                     response = await client.get(self.base_url, params=params)
                     data = response.json()
@@ -214,6 +217,9 @@ class DataProcessor:
 
                     new_reviews = data.get("reviews", [])
                     _reviews.extend(new_reviews)
+                    if self.verbosity:
+                        print(f"DataProcessor.get_reviews | {count} | New {len(new_reviews)} reviews fetched for data_id {data_id}")
+                        count+=1
 
                     if use_full_reviews:
                         if len(_reviews) >= self.max_reviews:
@@ -227,6 +233,8 @@ class DataProcessor:
 
                     params["next_page_token"] = data["serpapi_pagination"]["next_page_token"]
                     await asyncio.sleep(self.delay)
+                    if self.verbosity:
+                        print(f"DataProcessor.get_reviews | Going to visit next review page for data_id {data_id}")
 
             if not use_full_reviews:
                 _reviews = _reviews[:self.num_reviews]
@@ -237,6 +245,9 @@ class DataProcessor:
                 date=self.convert_datetime(review.get("iso_date", "")),
                 review_text=review.get("extracted_snippet", {}).get("original", "")
             ) for review in _reviews]
+            
+            if self.verbosity:
+                print(f"DataProcessor.get_reviews | Reviews collection completed for data_id {data_id}")
 
             return AnalysisResult(
                 type=place_info.get("type", ""),
@@ -256,10 +267,14 @@ class DataProcessor:
                 print(f"Warning: Partial results due to API error: {str(e)}")
                 return self._create_partial_result(_reviews, data_id)
             else:
+                # if self.verbosity:
+                #     print(f"DataProcessor.get_reviews | Failed to fetch reviews for data_id {data_id} due to API error: {str(e)}")
                 # Re-raise the APIError if we have no reviews
                 raise
 
         except Exception as e:
+            if self.verbosity:
+                print(f"DataProcessor.get_reviews | Failed to fetch reviews for data_id {data_id} due to API error: {str(e)}")
             raise DataProcessorError(f"An unexpected error occurred: {str(e)}")
 
     def _create_partial_result(self, reviews: List[Dict], data_id: str) -> AnalysisResult:
@@ -325,7 +340,7 @@ class DataProcessor:
                 results = response.json()
 
             if "suggestions" not in results:
-                raise NoResultsError(f"No suggestions found for query: {query}")
+                raise NoResultsError(f"No suggestions found for query: `{query}`")
 
             suggestions = []
             for suggestion in results["suggestions"]:
@@ -341,7 +356,9 @@ class DataProcessor:
                         ))
 
             if not suggestions:
-                raise NoResultsError(f"No matching suggestions found for query: {query}")
+                if self.verbosity:
+                    print(f"DataProcessor.get_suggestions | No suggestions found for query `{query}`")
+                raise NoResultsError(f"No matching suggestions found for query: `{query}`")
 
             return SuggestionResult(
                 status=results["search_metadata"]["status"],
@@ -352,23 +369,27 @@ class DataProcessor:
         except (APIError, NoResultsError) as e:
             raise
         except Exception as e:
+            if self.verbosity:
+                print(f"DataProcessor.get_suggestions | An unexpected error occurred while fetching suggestions for query `{query}`: {str(e)}")
             raise DataProcessorError(f"An unexpected error occurred while fetching suggestions: {str(e)}")
 
 
 
 class ReviewAnalyzer:
-    def __init__(self, model: str, api_key: str|List[str], system_prompt: str, data_prompt: str, batch_analytics_prompt: str) -> None:
+    def __init__(self, model: str, api_key: str|List[str], system_prompt: str, data_prompt: str, batch_analytics_prompt: str, verbosity: bool=False) -> None:
         """
-        Initialize the ReviewAnalyzer class.
+        Initializes the ReviewAnalyzer object with the given parameters.
 
         Args:
-        - model (str): The OpenAI model to use for generating text.
-        - api_key (str|List[str]): The OpenAI API key. If a list of keys is provided, the class will use the first key and cycle through the list if the key is rate-limited.
-        - system_prompt (str): The prompt to provide to the model as context when generating text.
-        - data_prompt (str): The prompt to provide to the model when generating text about a single data point.
-        - batch_analytics_prompt (str): The prompt to provide to the model when generating text about a batch of data points.
+        - model (str): The name of the OpenAI model to use for analysis.
+        - api_key (str|List[str]): The OpenAI API key to use. If a list is provided, the first key will be used for the first request, the second for the second request, and so on.
+        - system_prompt (str): The system prompt to send to the model as part of the analysis request.
+        - data_prompt (str): The data prompt to send to the model as part of the analysis request.
+        - batch_analytics_prompt (str): The batch analytics prompt to send to the model as part of the analysis request.
+        - verbosity (bool): Whether to print debug messages during the analysis process. Defaults to False.
         """
         self.model = model
+        self.verbosity = verbosity
         self.data_prompt = data_prompt
         self.system_prompt = system_prompt
         self.client = OpenAI(api_key=api_key)
@@ -398,7 +419,8 @@ class ReviewAnalyzer:
         Returns:
         - AnalysisResult: The generated text, parsed as an AnalysisResult object.
         """
-        print("LLM Call")
+        if self.verbosity:
+            print("ReviewAnalyzer._generate_ | LLM Call")
         return self.client.beta.chat.completions.parse(
             messages=messages,
             max_completion_tokens=3000,
@@ -428,6 +450,8 @@ class ReviewAnalyzer:
                 reviews=self.reviews_to_string(review_analysis.reviews)
             )}
         ]
+        if self.verbosity:
+            print("ReviewAnalyzer.generate_analysis | Generating analysis for the reviews")
         loop = asyncio.get_event_loop()
         completion = await loop.run_in_executor(None, self._generate_, messages)
         review_analysis.hotel_analysis = completion.choices[0].message.parsed
@@ -459,6 +483,8 @@ class ReviewAnalyzer:
                 for i, result in enumerate(analysis_results)])
             }
         ]
+        if self.verbosity:
+            print("ReviewAnalyzer.combine_analysis | Combining analysis together")
         loop = asyncio.get_event_loop()
         completion = await loop.run_in_executor(None, self._generate_, messages)
         analysis = AnalysisResult(**analysis_results[0].model_dump())
@@ -468,17 +494,19 @@ class ReviewAnalyzer:
     
 
 class TaskManager:
-    def __init__(self, data_processor: DataProcessor, review_analyzer: ReviewAnalyzer, batch_size: int=30) -> None:
+    def __init__(self, data_processor: DataProcessor, review_analyzer: ReviewAnalyzer, batch_size: int=30, verbosity: bool=False) -> None:
         """
-        Initialize the TaskManager class.
+        Initializes the TaskManager object.
 
         Args:
-        - data_processor (DataProcessor): The DataProcessor to use for fetching reviews and generating suggestions.
-        - review_analyzer (ReviewAnalyzer): The ReviewAnalyzer to use for generating text summaries of reviews.
-        - batch_size (int): The number of reviews to process at once. Defaults to 30.
+        - data_processor (DataProcessor): The DataProcessor object to use for fetching reviews.
+        - review_analyzer (ReviewAnalyzer): The ReviewAnalyzer object to use for analyzing reviews.
+        - batch_size (int): The number of reviews to process in each batch. Defaults to 30.
+        - verbosity (bool): Whether to print debug messages. Defaults to False.
         """
         self.cleanup_task = None
         self.analysis_results = {}
+        self.verbosity = verbosity
         self.batch_size = batch_size
         self.database = get_database()
         self.data_processor = data_processor
@@ -545,12 +573,20 @@ class TaskManager:
         if existing_data:
             return AnalysisResult(**existing_data[0]['analysis'])
         
+        if self.verbosity:
+            print(f"TaskManager.get_instant_analysis | Starting to fetch reviews for data_id `{data_id}`")
         review_result = await self.data_processor.get_reviews(data_id=data_id) 
         if review_result.reviews == [] or (not review_result.reviews):
+            if self.verbosity:
+                print(f"TaskManager.get_instant_analysis | No reviews found for data_id `{data_id}`")
             return {"status": "no_reviews", "data_id": data_id}
         
+        if self.verbosity:
+            print(f"TaskManager.get_instant_analysis | Starting to generate analysis for data_id `{data_id}`")
         review_result = await self.review_analyzer.generate_analysis(review_result)
         review_result.reviews = self.data_processor.sort_reviews_by_date(review_result.reviews, reverse=True)
+        if self.verbosity:
+            print(f"TaskManager.get_instant_analysis | Finished generating analysis for data_id `{data_id}`")
         
         # Save in db
         await self.database.save_new_data(data_id, "instant", review_result.model_dump())
@@ -601,14 +637,20 @@ class TaskManager:
         """
         try:
             # Get full hotel reviews
+            if self.verbosity:
+                print(f"TaskManager._process_full_analysis_ | Starting to fetch reviews for data_id `{data_id}`")
             review_result = await self.data_processor.get_reviews(data_id=data_id, use_full_reviews=True)
             
             if review_result.reviews == [] or (not review_result.reviews):
+                if self.verbosity:
+                    print(f"TaskManager._process_full_analysis_ | No reviews found for data_id `{data_id}`")
                 raise ValueError("no_reviews")
             
             batches = [review_result.reviews[i:i + self.batch_size] for i in range(0, len(review_result.reviews), self.batch_size)]
             
             async def process_batch(batch):
+                if self.verbosity:
+                    print(f"TaskManager._process_full_analysis_ | Processing batches of reviews for data_id `{data_id}`")
                 batch_result = AnalysisResult(**review_result.model_dump())
                 batch_result.reviews = batch
                 return await self.review_analyzer.generate_analysis(batch_result)
@@ -640,14 +682,16 @@ class TaskManager:
                 "created_at": datetime.now(),
                 "data": final_results[0].model_dump(),
             }
-            print(f"Full analysis completed for token: {token}")
+            if self.verbosity:
+                print(f"TaskManager._process_full_analysis_ | Full analysis completed for token: {token}")
         except Exception as e:
             self.analysis_results[token] = {
                 "error": str(e),
                 "status": "failed", 
                 "created_at": datetime.now()
             }
-            print(f"Full analysis failed for token: {token} with error: {e}")
+            if self.verbosity:
+                print(f"TaskManager._process_full_analysis_ | Full analysis failed for token: {token} with error: {e}")
             
     async def get_analysis_result(self, token: str) -> dict:
         """
@@ -741,7 +785,7 @@ def get_database(database_name: str = "reviews.db") -> DataBase:
     return DATABASE
 
 TASK_MANAGER = None
-def get_task_manager(serpapi_key: str, model: str, openai_key: str, num_reviews: int=50, max_reviews: int=150, num_suggestion: int=5, batch_size: int=30, language: str="en", country: str="in", delay: float=1) -> TaskManager:
+def get_task_manager(serpapi_key: str, model: str, openai_key: str, num_reviews: int=50, max_reviews: int=150, num_suggestion: int=5, batch_size: int=30, language: str="en", country: str="in", delay: float=1, verbosity: bool=True) -> TaskManager:
     global TASK_MANAGER
     if TASK_MANAGER is None:
         TASK_MANAGER = TaskManager(
@@ -749,6 +793,7 @@ def get_task_manager(serpapi_key: str, model: str, openai_key: str, num_reviews:
             review_analyzer=ReviewAnalyzer(
                 model=model,
                 api_key=openai_key,
+                verbosity=verbosity,
                 data_prompt=DATA_PROMPT,
                 system_prompt=SYSTEM_PROMPT,
                 batch_analytics_prompt=BATCH_ANALYTICS_PROMPT
@@ -757,6 +802,7 @@ def get_task_manager(serpapi_key: str, model: str, openai_key: str, num_reviews:
                 delay=delay,
                 country=country, 
                 language=language,
+                verbosity=verbosity,
                 api_key=serpapi_key,
                 num_reviews=num_reviews, 
                 max_reviews=max_reviews,

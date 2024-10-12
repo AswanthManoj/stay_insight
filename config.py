@@ -13,9 +13,9 @@ class Settings(BaseModel):
     delay:          float = 0.5               # Delay in seconds between paginations through SerpApi reviews to avoid rate limiting
     reload:         bool                      # Auto reload on file changes
     country:        str = "uk"                # Country for searching places based of for autocomplete
-    batch_size:     int = 30                  # Batch size for doing full analysis
-    num_reviews:    int = 40                  # Number of reviews to analyze used in instant analysis
-    max_reviews:    int = 150                 # Maximum number of reviews to consider for full analysis
+    batch_size:     int = 15                  # Batch size for doing full analysis
+    num_reviews:    int = 20                  # Number of reviews to analyze used in instant analysis
+    max_reviews:    int = 100                 # Maximum number of reviews to consider for full analysis
     serpapi_key:    str                       # SerpApi API key
     openai_model:   str = "gpt-4o-mini" # OpenAI model to use for analysis
     num_suggestion: int = 5                   # Number of autocomplete suggestions to return
@@ -43,9 +43,9 @@ def get_settings() -> Settings:
             delay =          os.getenv("DELAY", 0.5),
             reload =         os.getenv("RELOAD", False),
             country =        os.getenv("COUNTRY", "uk"),
-            batch_size =     os.getenv("BATCH_SIZE", 25),
-            num_reviews =    os.getenv("NUM_REVIEWS", 30),
-            max_reviews =    os.getenv("MAX_REVIEWS", 150),
+            batch_size =     os.getenv("BATCH_SIZE", 15),
+            num_reviews =    os.getenv("NUM_REVIEWS", 20),
+            max_reviews =    os.getenv("MAX_REVIEWS", 100),
             serpapi_key =    os.getenv("SERPAPI_KEY"),
             openai_model =   os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             num_suggestion = os.getenv("NUM_SUGGESTION", 5),

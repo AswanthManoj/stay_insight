@@ -22,7 +22,8 @@ app = FastAPI()
 manager = get_task_manager(
     model =          get_settings().openai_model,
     delay =          get_settings().delay,                              
-    country =        get_settings().country,                                                    
+    country =        get_settings().country,    
+    verbosity =      True,                                                
     batch_size =     get_settings().batch_size, 
     openai_key =     get_settings().openai_api_key,                          
     num_reviews =    get_settings().num_reviews,  
@@ -126,7 +127,6 @@ async def analyze_restaurant(request: Request, background_tasks: BackgroundTasks
                 return JSONResponse(content=review_result)
             return JSONResponse(content=review_result.model_dump())
         except Exception as e:
-            print (f"Error: {e}")
             raise HTTPException(status_code=500, detail=str(e))
     elif analysis_type == "full":
         try:
