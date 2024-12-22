@@ -265,21 +265,16 @@ class DataProcessor:
                 created_at=search_metadata.get("created_at", ""),
             )  
 
-        except APIError as e:
-            # If we have partial results, return them
-            if _reviews:
-                print(f"Warning: Partial results due to API error: {str(e)}")
-                return self._create_partial_result(_reviews, data_id)
-            else:
-                # if self.verbosity:
-                #     print(f"DataProcessor.get_reviews | Failed to fetch reviews for data_id {data_id} due to API error: {str(e)}")
-                # Re-raise the APIError if we have no reviews
-                raise
-
         except Exception as e:
-            if self.verbosity:
-                print(f"DataProcessor.get_reviews | Failed to fetch reviews for data_id {data_id} due to API error: {str(e)}")
-            raise DataProcessorError(f"An unexpected error occurred: {str(e)}")
+            if _reviews:
+                if self.verbosity:
+                    print(f"Warning: Partial results due to API error: {str(e)}")
+                return self._create_partial_result(_reviews, data_id)
+        
+            if self.verbosity:    
+                print(f"Failed to fetch reviews for data_id {data_id} due to : {e}")
+            
+            raise APIError(f"Failed to fetch reviews for data_id {data_id}") from e
 
     def _create_partial_result(self, reviews: List[Dict], data_id: str) -> AnalysisResult:
         """
@@ -344,7 +339,7 @@ class DataProcessor:
                 results = response.json()
 
             if "suggestions" not in results:
-                raise NoResultsError(f"No suggestions found for query: `{query}`")
+                raise NoResultsError(f"No suggestions found for query: '{query}'")
 
             suggestions = []
             for suggestion in results["suggestions"]:
@@ -362,7 +357,7 @@ class DataProcessor:
             if not suggestions:
                 if self.verbosity:
                     print(f"DataProcessor.get_suggestions | No suggestions found for query `{query}`")
-                raise NoResultsError(f"No matching suggestions found for query: `{query}`")
+                raise (f"No matching suggestions found for query: `{query}`")
 
             return SuggestionResult(
                 status=results["search_metadata"]["status"],
@@ -370,12 +365,14 @@ class DataProcessor:
                 created_at=results["search_metadata"]["created_at"],
             )
 
-        except (APIError, NoResultsError) as e:
+        except NoResultsError as e:
             raise
+        
         except Exception as e:
             if self.verbosity:
-                print(f"DataProcessor.get_suggestions | An unexpected error occurred while fetching suggestions for query `{query}`: {str(e)}")
-            raise DataProcessorError(f"An unexpected error occurred while fetching suggestions: {str(e)}")
+                print(f"DataProcessor.get_suggestions | An unexpected error occurred while fetching suggestions for query `{query}`: {e}")
+            error_msg = f"Failed to fetch suggestions for query '{query}' at location ({latitude}, {longitude})"
+            raise APIError(error_msg) from e
 
 
 
