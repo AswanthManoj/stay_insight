@@ -8,25 +8,25 @@ function retrieveAnalysis() {
         analysisContent.innerHTML = createSkeletonLoader();
 
         fetch(`/api/analysis/${token}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === "in_progress") {
-                displayInProgressMessage();
-            } else if (data.status === "failed") {
-                displayError(data.error);
-            } else {
-                displayAnalysis(data);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            displayError(error);
-        });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === "in_progress") {
+                    displayInProgressMessage();
+                } else if (data.status === "failed") {
+                    displayError(data.error);
+                } else {
+                    displayAnalysis(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                displayError(error);
+            });
     }
 }
 
@@ -40,7 +40,7 @@ function renderReviews(reviews) {
             <div class="text-yellow-400 mb-2">
                 ${'★'.repeat(Math.floor(review.rating))}
                 ${review.rating % 1 >= 0.5 ? '½' : ''}
-                ${'☆'.repeat(5 - Math.ceil(review.rating))}
+                ${'☆'.repeat(Math.max(0, 5 - Math.ceil(review.rating)))}
             </div>
             <p>${review.review_text}</p>
         </div>
@@ -49,9 +49,9 @@ function renderReviews(reviews) {
 
 
 function displayAnalysis(analysis) {
-    const starRating = '★'.repeat(Math.floor(analysis.rating)) + 
-                       (analysis.rating % 1 >= 0.5 ? '½' : '') + 
-                       '☆'.repeat(5 - Math.ceil(analysis.rating));
+    const starRating = '★'.repeat(Math.floor(analysis.rating)) +
+        (analysis.rating % 1 >= 0.5 ? '½' : '') +
+        '☆'.repeat(5 - Math.ceil(analysis.rating));
 
     let analysisHTML = `
         <div class="bg-stone-900 p-4">
@@ -298,11 +298,11 @@ function displayAnalysis(analysis) {
                         <div id="hiddenReviews" class="hidden space-y-4">
                             ${renderReviews(analysis.reviews.slice(10))}
                         </div>
-                        ${analysis.reviews.length > 10 ? 
-                            `<button id="loadMoreBtn" class="mt-4 bg-[#7fd36e] hover:bg-[#6ac259] text-stone-800 font-bold py-2 px-4 rounded">
+                        ${analysis.reviews.length > 10 ?
+            `<button id="loadMoreBtn" class="mt-4 bg-[#7fd36e] hover:bg-[#6ac259] text-stone-800 font-bold py-2 px-4 rounded">
                                 Load More
                             </button>` : ''
-                        }
+        }
                     </div>
                 </div>
             </div>
@@ -398,7 +398,7 @@ function displayInProgressMessage() {
 
 function displayError(error) {
     let errorMessage;
-    
+
     if (error === 'no_reviews') {
         errorMessage = "Oops! It looks like the restaurant has no reviews.";
     } else {

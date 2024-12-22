@@ -123,6 +123,7 @@ async def analyze_restaurant(request: Request, background_tasks: BackgroundTasks
     if analysis_type == "instant":
         try:
             review_result = await manager.get_instant_analysis(data_id) 
+            #print(review_result)
             if isinstance(review_result, dict):
                 return JSONResponse(content=review_result)
             return JSONResponse(content=review_result.model_dump())

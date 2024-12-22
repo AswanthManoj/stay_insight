@@ -208,6 +208,8 @@ class DataProcessor:
                     response = await client.get(self.base_url, params=params)
                     data = response.json()
 
+                    print(data)
+
                     if not place_info:
                         place_info = data.get("place_info", {})
                     if not search_metadata:
@@ -238,6 +240,8 @@ class DataProcessor:
 
             if not use_full_reviews:
                 _reviews = _reviews[:self.num_reviews]
+
+            #print(_reviews)
 
             reviews = [Review(
                 rating=review.get("rating", 0),

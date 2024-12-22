@@ -69,23 +69,23 @@ function getSuggestions() {
             },
             body: JSON.stringify(payload)
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.suggestions && data.suggestions.length > 0) {
-                displaySuggestions(data.suggestions);
-            } else {
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.suggestions && data.suggestions.length > 0) {
+                    displaySuggestions(data.suggestions);
+                } else {
+                    displayNoResults();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 displayNoResults();
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            displayNoResults();
-        });
+            });
     } else {
         suggestionsList.innerHTML = '';
     }
@@ -105,21 +105,21 @@ function displaySuggestions(suggestions) {
     suggestions.forEach(suggestion => {
         const li = document.createElement('li');
         li.className = 'px-4 sm:px-6 py-2 sm:py-3 hover:bg-stone-600 cursor-pointer text-left';
-        
+
         // Create a div for the place name
         const nameDiv = document.createElement('div');
         nameDiv.textContent = suggestion.value;
         nameDiv.className = 'font-semibold text-base sm:text-lg';
-        
+
         // Create a div for the address (subtext)
         const addressDiv = document.createElement('div');
         addressDiv.textContent = suggestion.subtext;
         addressDiv.className = 'text-sm text-stone-400';
-        
+
         // Append name and address to the list item
         li.appendChild(nameDiv);
         li.appendChild(addressDiv);
-        
+
         li.addEventListener('click', () => selectSuggestion(suggestion));
         suggestionsList.appendChild(li);
     });
@@ -172,7 +172,7 @@ function createSkeletonLoader() {
 
 function displayError(error) {
     let errorMessage;
-    
+
     if (error === 'no_reviews') {
         errorMessage = "Oops! It looks like the restaurant has no reviews.";
     } else {
@@ -220,33 +220,33 @@ function getAnalysis() {
             },
             body: JSON.stringify({ dataId: selectedDataId, analysisType: currentAnalysisType })
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (currentAnalysisType === 'instant') {
-                tokenSection.classList.add('hidden');
-                
-                if (data.status === "no_reviews") {
-                    displayError(data.status);
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
-                else {
-                    displayAnalysis(data);
+                return response.json();
+            })
+            .then(data => {
+                if (currentAnalysisType === 'instant') {
+                    tokenSection.classList.add('hidden');
+
+                    if (data.status === "no_reviews") {
+                        displayError(data.status);
+                    }
+                    else {
+                        displayAnalysis(data);
+                    }
+                } else {
+                    analysisToken.textContent = data.token;
+                    tokenSection.classList.remove('hidden');
+                    analysisContent.innerHTML = '';
+                    tokenSection.scrollIntoView({ behavior: 'smooth' });
                 }
-            } else {
-                analysisToken.textContent = data.token;
-                tokenSection.classList.remove('hidden');
-                analysisContent.innerHTML = '';
-                tokenSection.scrollIntoView({ behavior: 'smooth' });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            displayError(error);
-        });
+            })
+            .catch(error => {
+                console.error('Error In getAnalysis :', error);
+                displayError(error);
+            });
     }
 }
 
@@ -282,9 +282,9 @@ function resetSearch() {
 }
 
 function displayAnalysis(analysis) {
-    const starRating = '★'.repeat(Math.floor(analysis.rating)) + 
-                       (analysis.rating % 1 >= 0.5 ? '½' : '') + 
-                       '☆'.repeat(5 - Math.ceil(analysis.rating));
+    const starRating = '★'.repeat(Math.floor(analysis.rating)) +
+        (analysis.rating % 1 >= 0.5 ? '½' : '') +
+        '☆'.repeat(5 - Math.ceil(analysis.rating));
 
     let analysisHTML = `
         <div class="bg-stone-900 p-4">
@@ -526,11 +526,11 @@ function displayAnalysis(analysis) {
                         <div id="hiddenReviews" class="hidden space-y-4">
                             ${renderReviews(analysis.reviews.slice(10))}
                         </div>
-                        ${analysis.reviews.length > 10 ? 
-                            `<button id="loadMoreBtn" class="mt-4 bg-[#7fd36e] hover:bg-[#6ac259] text-stone-800 font-bold py-2 px-4 rounded">
+                        ${analysis.reviews.length > 10 ?
+            `<button id="loadMoreBtn" class="mt-4 bg-[#7fd36e] hover:bg-[#6ac259] text-stone-800 font-bold py-2 px-4 rounded">
                                 Load More
                             </button>` : ''
-                        }
+        }
                     </div>
                 </div>
             </div>
@@ -564,6 +564,7 @@ function displayAnalysis(analysis) {
 }
 
 function renderReviews(reviews) {
+    console.log(reviews);
     return reviews.map(review => `
         <div class="bg-stone-800 p-4 rounded-lg border border-stone-700">
             <div class="flex justify-between items-center mb-2">
@@ -573,8 +574,9 @@ function renderReviews(reviews) {
             <div class="text-yellow-400 mb-2">
                 ${'★'.repeat(Math.floor(review.rating))}
                 ${review.rating % 1 >= 0.5 ? '½' : ''}
-                ${'☆'.repeat(5 - Math.ceil(review.rating))}
+                ${'☆'.repeat(Math.max(0, 5 - Math.ceil(review.rating)))}
             </div>
+
             <p>${review.review_text}</p>
         </div>
     `).join('');
@@ -599,7 +601,7 @@ function setAnalysisType(type) {
 // Event listeners
 window.addEventListener('load', requestLocation);
 
-searchInput.addEventListener('input', function() {
+searchInput.addEventListener('input', function () {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(getSuggestions, 500);
 });
